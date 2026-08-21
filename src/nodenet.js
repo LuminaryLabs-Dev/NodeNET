@@ -1,27 +1,27 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { inspectTarget } from './project/inspect.js';
-import { prepareTarget } from './project/prepare.js';
-import {
-  restoreTarget,
-  buildTarget,
-  testTarget,
-  publishTarget,
-  cleanTarget,
-  runTarget
-} from './project/commands.js';
 import { runDotnet } from './dotnet/cli.js';
-import { openLibrary } from './library/bridge.js';
 import { NodeNetError, ProcessExitError } from './errors.js';
+import { createDefaultKernel, serviceSnapshot } from './kernel/context.js';
 
 export class NodeNET {
   static async attach(target = '.', options = {}) {
     const resolved = path.resolve(target);
-    await inspectTarget(resolved);
-    return new NodeNET(resolved, options);
+    const kernel = await createDefaultKernel({
+      plugins: options.plugins ?? [],
+      baseEnv: options.env ?? process.env
+    });
+    try {
+      const services = serviceSnapshot(kernel);
+      await services.project.inspect(resolved);
+      return new NodeNET(resolved, options, kernel, services);
+    } catch (error) {
+      await kernel.dispose().catch(() => {});
+      throw error;
+    }
   }
 
-  constructor(target, options = {}) {
+  constructor(target, options = {}, kernel, services) {
     this.target = target;
     this.options = {
       mode: 'shared',
@@ -29,6 +29,9 @@ export class NodeNET {
       defaultSdk: '10.0',
       ...options
     };
+    delete this.options.plugins;
+    this.kernel = kernel;
+    this.services = services;
     this.context = null;
     this.processes = new Set();
     this.libraries = new Set();
@@ -41,11 +44,16 @@ export class NodeNET {
         ...this.context.state,
         host: this.context.host,
         ready: this.context.ready,
-        readinessWarnings: this.context.readinessWarnings
+        readinessWarnings: this.context.readinessWarnings,
+        services: this.kernel.describe()
       };
     }
-    const targetInfo = await inspectTarget(this.target);
-    return { prepared: false, target: targetInfo };
+    const targetInfo = await this.services.project.inspect(this.target);
+    return {
+      prepared: false,
+      target: targetInfo,
+      services: this.kernel.describe()
+    };
   }
 
   async prepare(options = {}) {
@@ -56,17 +64,13 @@ export class NodeNET {
       const needsRestore = options.restore !== false
         && this.context.targetInfo.needsRestore
         && !this.context.restoreResult;
-
       if (!needsSdkUpgrade) {
-        if (needsRestore) this.context.restoreResult = await restoreTarget(this.context, options);
+        if (needsRestore) this.context.restoreResult = await this.services.project.restore(this.context, options);
         return this.context;
       }
-
-      if (this.context.paths?.temporary) {
-        await fs.rm(this.context.paths.baseDir, { recursive: true, force: true });
-      }
+      if (this.context.paths?.temporary) await fs.rm(this.context.paths.baseDir, { recursive: true, force: true });
     }
-    this.context = await prepareTarget(this.target, {
+    this.context = await this.services.project.prepare(this.target, {
       ...this.options,
       ...options,
       requireSdk
@@ -74,58 +78,55 @@ export class NodeNET {
     return this.context;
   }
 
-  async #ensurePrepared(options = {}) {
-    return this.prepare(options);
-  }
+  async #ensurePrepared(options = {}) { return this.prepare(options); }
 
   async restore(options = {}) {
     if (!this.context) {
       const context = await this.#ensurePrepared();
-      return context.restoreResult ?? restoreTarget(context, options);
+      return context.restoreResult ?? this.services.project.restore(context, options);
     }
-    const result = await restoreTarget(this.context, options);
+    const result = await this.services.project.restore(this.context, options);
     this.context.restoreResult = result;
     return result;
   }
 
   async build(options = {}) {
     const context = await this.#ensurePrepared();
-    return buildTarget(context, options);
+    return this.services.project.build(context, options);
   }
 
   async test(options = {}) {
     const context = await this.#ensurePrepared();
-    return testTarget(context, options);
+    return this.services.project.test(context, options);
   }
 
   async publish(options = {}) {
     const context = await this.#ensurePrepared();
-    return publishTarget(context, options);
+    return this.services.project.publish(context, options);
   }
 
   async clean(options = {}) {
     const context = await this.#ensurePrepared({ restore: false });
-    return cleanTarget(context, options);
+    return this.services.project.clean(context, options);
   }
 
   async run(options = {}) {
     const context = await this.#ensurePrepared();
-    const handle = runTarget(context, options);
+    const handle = this.services.project.run(context, options);
     this.processes.add(handle);
     handle.once('exit', () => this.processes.delete(handle));
     return handle;
   }
 
   async exec(args, options = {}) {
-    if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) {
-      throw new TypeError('exec() expects an array of dotnet CLI arguments.');
-    }
+    if (!Array.isArray(args) || args.some(arg => typeof arg !== 'string')) throw new TypeError('exec() expects an array of dotnet CLI arguments.');
     const context = await this.#ensurePrepared({ restore: false, requireSdk: options.requireSdk ?? true });
     if (!context.dotnet) throw new NodeNetError('This target does not require .NET and no SDK was prepared.', { code: 'DOTNET_NOT_PREPARED' });
     const result = await runDotnet(context.dotnet, args, {
       cwd: options.cwd ?? context.targetInfo.directory,
       timeout: options.timeout ?? 10 * 60_000,
-      signal: options.signal
+      signal: options.signal,
+      env: options.env
     });
     if (!result.ok && options.rejectOnNonZero !== false) {
       throw new ProcessExitError(`dotnet ${args.join(' ')} exited with code ${result.exitCode}.`, { details: { result } });
@@ -135,10 +136,49 @@ export class NodeNET {
 
   async library(assembly, options = {}) {
     const context = await this.#ensurePrepared({ restore: false, requireSdk: true });
-    const handle = await openLibrary(context, assembly, options);
+    const handle = await this.services.interop.openLibrary(context, assembly, options);
     this.libraries.add(handle);
     handle.process.once('exit', () => this.libraries.delete(handle));
     return handle;
+  }
+
+  async capabilities({ prepare = false } = {}) {
+    let context = this.context;
+    let targetInfo = context?.targetInfo ?? null;
+    let host = context?.host ?? null;
+    if (prepare && !context) context = await this.prepare({ restore: false });
+    if (!context) {
+      targetInfo = await this.services.project.inspect(this.target);
+      host = this.services.host.detect();
+    }
+    return this.services.capabilities.snapshot({
+      context,
+      targetInfo,
+      host,
+      execution: this.services.execution
+    });
+  }
+
+  async doctor() {
+    const context = await this.prepare({ restore: false });
+    return {
+      node: { version: process.version },
+      target: context.targetInfo,
+      environment: context.state,
+      capabilities: await this.capabilities(),
+      services: this.kernel.describe()
+    };
+  }
+
+  environment() {
+    if (!this.context) return null;
+    return {
+      mode: this.context.paths.mode,
+      baseDir: this.context.paths.baseDir,
+      root: this.context.dotnet?.root ?? null,
+      source: this.context.dotnet?.source ?? null,
+      state: this.context.state
+    };
   }
 
   async dispose() {
@@ -146,9 +186,8 @@ export class NodeNET {
     await Promise.allSettled([...this.processes].map(handle => handle.stop()));
     this.libraries.clear();
     this.processes.clear();
-    if (this.context?.paths?.temporary) {
-      await fs.rm(this.context.paths.baseDir, { recursive: true, force: true });
-    }
+    if (this.context?.paths?.temporary) await fs.rm(this.context.paths.baseDir, { recursive: true, force: true });
     this.context = null;
+    await this.kernel?.dispose?.();
   }
 }

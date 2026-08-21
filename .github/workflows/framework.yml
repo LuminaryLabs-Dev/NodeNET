@@ -1,0 +1,47 @@
+name: Avalonia Framework Acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'bridge/**'
+      - 'bin/**'
+      - 'test/integration/avalonia.test.mjs'
+      - '.github/workflows/framework.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+env:
+  NODENET_INTEGRATION: '1'
+  NODENET_AVALONIA: '1'
+  NODENET_TEST_SDK: '10.0'
+  NODENET_KEEP_AVALONIA_ARTIFACTS: '1'
+
+jobs:
+  avalonia-headless:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - name: Create, build, interact with, and render Avalonia headlessly
+        env:
+          NODENET_AVALONIA_OUTPUT: artifacts/avalonia-${{ runner.os }}
+        run: node --test test/integration/avalonia.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: avalonia-${{ runner.os }}
+          path: artifacts/
+          if-no-files-found: warn

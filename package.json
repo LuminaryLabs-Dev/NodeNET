@@ -1,7 +1,7 @@
 {
   "name": "@luminarylabs/nodenet",
-  "version": "0.2.0",
-  "description": "Portable .NET environment, build, runtime, and interop control for Node.js.",
+  "version": "0.3.0",
+  "description": "Bring the .NET toolchain and runtime into Node.js with a portable Node-native API and CLI.",
   "type": "module",
   "main": "./src/index.js",
   "exports": {
@@ -30,11 +30,14 @@
   "keywords": [
     "dotnet",
     "csharp",
+    "nodejs",
     "esm",
-    "node",
     "runtime",
     "sdk",
-    "interop"
+    "interop",
+    "avalonia",
+    "msbuild",
+    "nuget"
   ],
   "license": "MIT"
 }

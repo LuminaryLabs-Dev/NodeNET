@@ -2,3 +2,8 @@ export { NodeNET } from './nodenet.js';
 export * from './errors.js';
 export { detectHost } from './host/platform.js';
 export { inspectTarget } from './project/inspect.js';
+export { definePlugin } from './kernel/plugin.js';
+export { ServiceRegistry } from './kernel/registry.js';
+export { LocalExecutionService } from './services/execution.js';
+export { SERVICE } from './services/names.js';
+export * from './interop/index.js';

@@ -1,10 +1,55 @@
 # NodeNET
 
-Portable .NET environment, build, runtime, and interop control for Node.js.
+**Bring `dotnet` into the Node.js ecosystem.**
 
-NodeNET lets an ESM application attach to a .NET workspace, project, assembly, or executable and make the required .NET environment available without requiring a machine-wide installation. It can use a compatible system `dotnet`, or provision an isolated official SDK/runtime into a NodeNET-managed root.
+NodeNET is an ESM-native Node.js facade over the official .NET toolchain and runtime. It can inspect .NET projects, resolve or privately provision a compatible SDK/runtime, restore/build/test/publish/run them, pass arbitrary `dotnet` commands through from a `nodenet` CLI, and interoperate with compiled .NET libraries without requiring a machine-wide .NET setup.
 
-## Core contract
+> Developer Preview — `0.3.0`
+
+## Install
+
+```bash
+npm install @luminarylabs/nodenet
+```
+
+Or evaluate commands without a global install:
+
+```bash
+npx nodenet info
+```
+
+## `dotnet`, from Node
+
+If you know the .NET CLI, the NodeNET CLI is intentionally familiar:
+
+```text
+dotnet restore      → nodenet restore
+dotnet build        → nodenet build
+dotnet test         → nodenet test
+dotnet publish      → nodenet publish
+dotnet run          → nodenet run
+```
+
+Commands NodeNET does not own transparently pass through to the selected .NET SDK:
+
+```bash
+nodenet new console -o Hello
+nodenet workload list
+nodenet tool list
+nodenet nuget list source
+```
+
+Starting from a machine with Node and no compatible global .NET SDK:
+
+```bash
+npx nodenet new console -o Hello
+cd Hello
+npx nodenet run
+```
+
+NodeNET can provision a private official SDK and keep `DOTNET_ROOT`, CLI home, NuGet cache, and PATH changes scoped to child processes.
+
+## JavaScript API
 
 ```js
 import { NodeNET } from '@luminarylabs/nodenet';
@@ -12,136 +57,184 @@ import { NodeNET } from '@luminarylabs/nodenet';
 const app = await NodeNET.attach('./MyApp');
 
 await app.prepare();
-const build = await app.build();
+await app.build();
+
 const process = await app.run();
 const result = await process.wait();
+
+await app.dispose();
 ```
 
-`prepare()` is the central operation. It inspects the target and host, resolves the required SDK/runtime, finds or provisions a compatible `dotnet`, configures an isolated child environment, restores project dependencies when needed, checks declared workload requirements, and records readiness evidence.
+The public facade remains deliberately small:
 
-## Portable modes
+```text
+NodeNET.attach()
+net.info()
+net.prepare()
+net.restore()
+net.build()
+net.test()
+net.publish()
+net.clean()
+net.run()
+net.exec()
+net.library()
+net.capabilities()
+net.doctor()
+net.environment()
+net.dispose()
+```
 
-- **shared** (default): managed SDKs/runtimes are cached under `~/.nodenet` and reused across projects.
-- **local**: managed state lives under the attached project's `.nodenet` directory.
-- **temporary**: an isolated root is created in the OS temp directory and removed by `dispose()`; useful for CI, sandboxes, and agents.
+## Native CLI commands
 
-NodeNET does not modify machine/user `PATH`, register .NET globally, write the Windows registry, or invoke OS package managers. `DOTNET_ROOT`, `DOTNET_CLI_HOME`, `NUGET_PACKAGES`, and `PATH` are configured only for NodeNET child processes.
+```text
+nodenet info
+nodenet prepare
+nodenet restore
+nodenet build
+nodenet test
+nodenet publish
+nodenet clean
+nodenet run
+nodenet doctor
+nodenet env
+nodenet capabilities
+nodenet cache
+```
 
-## System .NET is optional
+Use `--json` for automation output. Native commands use the current directory by default; `--target <path>` selects another project/workspace.
 
-Resolution order in the default `auto` isolation mode is:
+See [`docs/CLI.md`](docs/CLI.md).
+
+## Portable environment modes
+
+- **shared** — reusable managed environments under `~/.nodenet` (or `NODENET_HOME`)
+- **local** — managed state under the attached project's `.nodenet`
+- **temporary** — isolated OS-temp environment removed by `dispose()`
+
+Resolution order in `auto` mode:
 
 1. explicit `dotnetPath`
 2. compatible NodeNET-managed environment
 3. compatible system `dotnet`
-4. provision an official private .NET environment
+4. provision an official private .NET SDK/runtime
 
-Use `isolation: 'managed'` to forbid system .NET, or `isolation: 'system'` to forbid provisioning.
+Use `isolation: 'managed'` to forbid system .NET or `isolation: 'system'` to forbid private provisioning.
 
-```js
-const app = await NodeNET.attach('./MyApp', {
-  mode: 'temporary',
-  isolation: 'managed',
-  sdk: '10.0'
-});
+## Service/plugin architecture
 
-await app.prepare();
+NodeNET presents one product to users, but internally composes stable services from plugins:
+
+```text
+NodeNET facade
+     ↓
+service kernel
+     ↓
+Environment  Execution  Project  Interop  Capabilities
+     ↓          ↓          ↓        ↓
+ default providers / replaceable plugins
+     ↓
+official .NET
 ```
 
-## Project operations
+The default execution provider is local and shell-free. The architecture permits future container/remote execution providers without changing `prepare()`, `build()`, or `run()`.
+
+Advanced plugin APIs are exported from the package root, but normal NodeNET users do not need to configure them.
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## JavaScript ↔ .NET
+
+Compatibility invocation still works:
 
 ```js
-await app.restore();
-await app.build({ configuration: 'Release' });
-await app.test();
-await app.publish({
-  configuration: 'Release',
-  runtime: 'linux-x64',
-  selfContained: true,
-  output: './publish'
-});
+const lib = await app.library('./bin/Release/net10.0/MyLibrary.dll');
 
-const running = await app.run({ args: ['--example'] });
-running.on('stdout', chunk => process.stdout.write(chunk));
-await running.stop();
-```
-
-The underlying .NET SDK remains authoritative for MSBuild, Roslyn, NuGet, workloads, templates, and tools. Advanced commands stay available without duplicating those systems in JavaScript:
-
-```js
-await app.exec(['new', 'install', 'Avalonia.Templates']);
-await app.exec(['workload', 'list']);
-```
-
-An empty directory can be attached as a NodeNET **workspace** when the goal is to provision an SDK and use raw `dotnet` CLI commands before a project exists.
-
-## JavaScript → .NET libraries
-
-NodeNET ships one generic C# bridge instead of framework-specific adapters. It loads an arbitrary assembly in a separate CoreCLR process and uses newline-delimited JSON RPC over stdin/stdout.
-
-```js
-const net = await NodeNET.attach('./MyLibrary.csproj', {
-  sdk: '10.0'
-});
-
-await net.prepare();
-await net.build({ configuration: 'Release' });
-
-const library = await net.library('./bin/Release/net10.0/MyLibrary.dll');
-const response = await library.invoke({
+const response = await lib.invoke({
   type: 'Example.Calculator',
   method: 'Add',
   arguments: [5, 8]
 });
 
 console.log(response.result); // 13
-await library.close();
 ```
 
-The bridge currently supports public static methods and public instance methods whose declaring type has a public parameterless constructor. JSON arguments are converted to the selected method's parameter types. `Task` and `ValueTask` results are awaited.
+NodeNET 0.3 also introduces persistent CLR object handles:
 
-## CLI
+```js
+const Counter = lib.type('Example.Counter');
+const counter = await Counter.new(10);
 
-```text
-nodenet info <target>
-nodenet prepare <target>
-nodenet restore <target>
-nodenet build <target>
-nodenet test <target>
-nodenet publish <target>
-nodenet run <target> [...args]
-nodenet exec <target> [...dotnet args]
+await counter.call('Increment');
+console.log(await counter.get('Value')); // 11
+
+await counter.dispose();
 ```
 
-## Provisioning and trust
+Interop uses a versioned binary-safe framed protocol between Node and the out-of-process bridge. `Buffer`/`Uint8Array` arguments can travel as raw payload bytes, and returned `System.IO.Stream` instances become chunked remote stream handles.
 
-NodeNET resolves official SDK/runtime archives from Microsoft's .NET release metadata, verifies the published SHA-512 hash before extraction, extracts into a staging directory, verifies `dotnet --info`, and only then activates the versioned managed root. Install locks prevent two Node processes from provisioning the same SDK/runtime simultaneously.
+See [`docs/INTEROP.md`](docs/INTEROP.md).
 
-A NodeNET-managed root is versioned (`sdk-10.0.100`, `runtime-10.0.0`, etc.) so a new install never mutates an in-use runtime tree.
+## Avalonia
 
-NodeNET is an orchestration layer, **not a security sandbox**. Running an untrusted .NET project is equivalent to running other untrusted native-capable code on the host.
+Avalonia remains a framework that runs **on top of NodeNET**, not a dependency embedded into NodeNET core.
 
-## Requirements
+The intended end-user flow is:
 
-- Node.js 20+
-- a supported host: Windows x64/ARM64, macOS x64/ARM64, Linux glibc x64/ARM64, or Linux musl x64/ARM64
-- ability to spawn native child processes
-- required OS-native dependencies for the selected .NET runtime/framework
-- network access when an SDK/runtime or NuGet package is not already cached
+```bash
+nodenet new install Avalonia.Templates
+nodenet new avalonia.app -o DesktopApp
+cd DesktopApp
+nodenet restore
+nodenet build
+nodenet run
+```
+
+The integration suite also includes an opt-in headless Avalonia acceptance path that creates an application, drives state, and captures rendered PNG evidence with Avalonia's headless Skia backend when network-backed framework dependencies are available.
+
+## Security
+
+NodeNET is an orchestration and interoperability layer, **not a security sandbox**. Building, testing, running, or loading untrusted .NET code can execute arbitrary native-capable code with the privileges of the selected executor.
+
+Use a real container/OS isolation boundary for untrusted workloads.
+
+See [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## Supported host identities
+
+- `win-x64`
+- `win-arm64`
+- `osx-x64`
+- `osx-arm64`
+- `linux-x64`
+- `linux-arm64`
+- `linux-musl-x64`
+- `linux-musl-arm64`
+
+A private .NET archive does not supply every OS-native dependency required by every framework. NodeNET deliberately does not run `apt`, `brew`, `dnf`, `choco`, or similar package managers automatically.
 
 ## Validation
 
 ```bash
 npm test
 npm run check
+npm pack --dry-run
 ```
 
-Network-backed provisioning tests are opt-in:
+Network-backed portable integration:
 
 ```bash
 NODENET_INTEGRATION=1 npm run test:integration
 ```
 
-Avalonia template/build acceptance is additionally gated behind `NODENET_AVALONIA=1` so normal unit tests stay fast and deterministic.
+Avalonia build/headless acceptance:
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/PORTABILITY.md`](docs/PORTABILITY.md), and [`docs/SECURITY.md`](docs/SECURITY.md).
+```bash
+NODENET_INTEGRATION=1 NODENET_AVALONIA=1 npm run test:integration
+```
+
+## Ownership boundary
+
+NodeNET owns environment detection, .NET acquisition/selection, isolated child environments, CLI/API orchestration, process lifecycle, structured results, capabilities, and JS↔.NET bridge semantics.
+
+Microsoft/.NET remains authoritative for CoreCLR, JIT, GC, BCL, Roslyn, MSBuild, NuGet resolution, workloads, templates, C# semantics, and runtime behavior.

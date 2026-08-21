@@ -7,10 +7,12 @@ on:
     paths:
       - 'src/**'
       - 'bridge/**'
+      - 'bin/**'
       - 'test/integration/**'
       - 'test/fixtures/**'
       - '.github/workflows/integration.yml'
       - 'package.json'
+      - 'package-lock.json'
 
 permissions:
   contents: read
@@ -30,6 +32,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --ignore-scripts
-      - name: Prove NodeNET managed provisioning and bridge
+      - run: npm ci --ignore-scripts
+      - name: Prove managed provisioning, CLI, build/run, and bridge
         run: npm run test:integration

@@ -1,81 +1,122 @@
+using System.Buffers.Binary;
 using System.Text.Json;
 using NodeNET.Bridge;
 
-var protocolOut = Console.Out;
+var protocolIn = Console.OpenStandardInput();
+var protocolOut = Console.OpenStandardOutput();
+var protocolTextOut = Console.Out;
 var protocolError = Console.Error;
 var jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+var objects = new ObjectTable();
 
-while (true)
+try
 {
-    var line = await Console.In.ReadLineAsync().ConfigureAwait(false);
-    if (line is null) break;
-    if (string.IsNullOrWhiteSpace(line)) continue;
-
-    RpcRequest? request = null;
-    try
+    while (true)
     {
-        request = JsonSerializer.Deserialize<RpcRequest>(line, jsonOptions)
-            ?? throw new InvalidOperationException("Request was empty.");
-
-        if (request.Method == "shutdown")
-        {
-            await WriteResponseAsync(new RpcResponse { Id = request.Id, Ok = true, Result = "bye" });
-            break;
-        }
-
-        if (request.Method == "ping")
-        {
-            await WriteResponseAsync(new RpcResponse { Id = request.Id, Ok = true, Result = "pong" });
-            continue;
-        }
-
-        if (request.Method != "invoke")
-            throw new InvalidOperationException($"Unsupported RPC method: {request.Method}");
-
-        using var capturedOut = new StringWriter();
-        using var capturedError = new StringWriter();
-        Console.SetOut(capturedOut);
-        Console.SetError(capturedError);
+        var frame = await ReadFrameAsync(protocolIn).ConfigureAwait(false);
+        if (frame is null) break;
+        RpcRequest? request = null;
         try
         {
-            var result = await Invocation.InvokeAsync(request).ConfigureAwait(false);
-            Console.SetOut(protocolOut);
-            Console.SetError(protocolError);
+            request = JsonSerializer.Deserialize<RpcRequest>(frame.Value.Header, jsonOptions)
+                ?? throw new InvalidOperationException("Request was empty.");
+            request.Payload = frame.Value.Payload;
+
+            if (request.Operation == "shutdown")
+            {
+                await WriteResponseAsync(new RpcResponse { Id = request.Id, Ok = true, Result = "bye" }, Array.Empty<byte>()).ConfigureAwait(false);
+                break;
+            }
+            if (request.Operation == "ping")
+            {
+                await WriteResponseAsync(new RpcResponse { Id = request.Id, Ok = true, Result = "pong" }, Array.Empty<byte>()).ConfigureAwait(false);
+                continue;
+            }
+
+            using var capturedOut = new StringWriter();
+            using var capturedError = new StringWriter();
+            Console.SetOut(capturedOut);
+            Console.SetError(capturedError);
+            BridgeResult result;
+            try { result = await Invocation.DispatchAsync(request, objects).ConfigureAwait(false); }
+            finally { Console.SetOut(protocolTextOut); Console.SetError(protocolError); }
             await WriteResponseAsync(new RpcResponse
             {
                 Id = request.Id,
                 Ok = true,
-                Result = result,
+                Result = result.Value,
                 Stdout = capturedOut.ToString(),
                 Stderr = capturedError.ToString()
-            });
+            }, result.Payload).ConfigureAwait(false);
         }
-        finally
+        catch (Exception error)
         {
-            Console.SetOut(protocolOut);
             Console.SetError(protocolError);
-        }
-    }
-    catch (Exception error)
-    {
-        Console.SetOut(protocolOut);
-        Console.SetError(protocolError);
-        await WriteResponseAsync(new RpcResponse
-        {
-            Id = request?.Id,
-            Ok = false,
-            Error = new RpcError
+            await WriteResponseAsync(new RpcResponse
             {
-                Type = error.GetType().FullName ?? error.GetType().Name,
-                Message = error.Message,
-                Stack = error.StackTrace
-            }
-        });
+                Id = request?.Id,
+                Ok = false,
+                Error = new RpcError
+                {
+                    Code = "INVOCATION_FAILED",
+                    Type = error.GetType().FullName ?? error.GetType().Name,
+                    Message = error.Message,
+                    Stack = error.StackTrace
+                }
+            }, Array.Empty<byte>()).ConfigureAwait(false);
+        }
     }
 }
-
-async Task WriteResponseAsync(RpcResponse response)
+finally
 {
-    await protocolOut.WriteLineAsync(JsonSerializer.Serialize(response, jsonOptions)).ConfigureAwait(false);
+    await objects.ClearAsync().ConfigureAwait(false);
+}
+
+async Task WriteResponseAsync(RpcResponse response, byte[] payload)
+{
+    var header = JsonSerializer.SerializeToUtf8Bytes(response, jsonOptions);
+    var prefix = new byte[8];
+    BinaryPrimitives.WriteInt32LittleEndian(prefix.AsSpan(0, 4), header.Length);
+    BinaryPrimitives.WriteInt32LittleEndian(prefix.AsSpan(4, 4), payload.Length);
+    await protocolOut.WriteAsync(prefix.AsMemory()).ConfigureAwait(false);
+    await protocolOut.WriteAsync(header.AsMemory()).ConfigureAwait(false);
+    if (payload.Length > 0) await protocolOut.WriteAsync(payload.AsMemory()).ConfigureAwait(false);
     await protocolOut.FlushAsync().ConfigureAwait(false);
+}
+
+static async Task<(byte[] Header, byte[] Payload)?> ReadFrameAsync(Stream input)
+{
+    var prefix = new byte[8];
+    var gotPrefix = await ReadExactlyOrEofAsync(input, prefix).ConfigureAwait(false);
+    if (!gotPrefix) return null;
+    var headerLength = BinaryPrimitives.ReadInt32LittleEndian(prefix.AsSpan(0, 4));
+    var payloadLength = BinaryPrimitives.ReadInt32LittleEndian(prefix.AsSpan(4, 4));
+    if (headerLength < 0 || headerLength > 4 * 1024 * 1024) throw new InvalidDataException("Invalid NodeNET protocol header length.");
+    if (payloadLength < 0 || payloadLength > 1024 * 1024 * 1024) throw new InvalidDataException("Invalid NodeNET protocol payload length.");
+    var header = new byte[headerLength];
+    var payload = new byte[payloadLength];
+    await ReadExactlyRequiredAsync(input, header).ConfigureAwait(false);
+    if (payloadLength > 0) await ReadExactlyRequiredAsync(input, payload).ConfigureAwait(false);
+    return (header, payload);
+}
+
+static async Task<bool> ReadExactlyOrEofAsync(Stream stream, byte[] buffer)
+{
+    var offset = 0;
+    while (offset < buffer.Length)
+    {
+        var read = await stream.ReadAsync(buffer.AsMemory(offset)).ConfigureAwait(false);
+        if (read == 0)
+        {
+            if (offset == 0) return false;
+            throw new EndOfStreamException("Unexpected EOF inside NodeNET protocol frame.");
+        }
+        offset += read;
+    }
+    return true;
+}
+
+static async Task ReadExactlyRequiredAsync(Stream stream, byte[] buffer)
+{
+    if (!await ReadExactlyOrEofAsync(stream, buffer).ConfigureAwait(false)) throw new EndOfStreamException("Unexpected EOF inside NodeNET protocol frame.");
 }

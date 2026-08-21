@@ -13,13 +13,14 @@ function appendLimited(current, chunk, maxBuffer) {
 }
 
 export class ProcessHandle extends EventEmitter {
-  constructor(child, { command, args, cwd, maxBuffer = DEFAULT_MAX_BUFFER, started }) {
+  constructor(child, { command, args, cwd, maxBuffer = DEFAULT_MAX_BUFFER, started, binaryStdout = false }) {
     super();
     this.child = child;
     this.command = command;
     this.args = [...args];
     this.cwd = cwd ?? process.cwd();
     this.maxBuffer = maxBuffer;
+    this.binaryStdout = binaryStdout;
     this.stdout = '';
     this.stderr = '';
     this.running = true;
@@ -60,10 +61,10 @@ export class ProcessHandle extends EventEmitter {
       });
     });
 
-    child.stdout.setEncoding('utf8');
+    if (!binaryStdout) child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     child.stdout.on('data', chunk => {
-      this.stdout = appendLimited(this.stdout, chunk, maxBuffer);
+      if (!binaryStdout) this.stdout = appendLimited(this.stdout, chunk, maxBuffer);
       this.emit('stdout', chunk);
     });
     child.stderr.on('data', chunk => {
@@ -102,7 +103,8 @@ export function spawnManagedProcess(command, args = [], options = {}) {
     env = process.env,
     maxBuffer = DEFAULT_MAX_BUFFER,
     windowsHide = true,
-    signal
+    signal,
+    binaryStdout = false
   } = options;
 
   const started = performance.now();
@@ -122,7 +124,7 @@ export function spawnManagedProcess(command, args = [], options = {}) {
     });
   }
 
-  const handle = new ProcessHandle(child, { command, args, cwd, maxBuffer, started });
+  const handle = new ProcessHandle(child, { command, args, cwd, maxBuffer, started, binaryStdout });
   if (signal) {
     const abort = () => child.kill('SIGTERM');
     if (signal.aborted) abort();
