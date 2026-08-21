@@ -1,0 +1,40 @@
+{
+  "name": "@luminarylabs/nodenet",
+  "version": "0.2.0",
+  "description": "Portable .NET environment, build, runtime, and interop control for Node.js.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "nodenet": "./bin/nodenet.js"
+  },
+  "files": [
+    "src",
+    "bridge",
+    "bin",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.mjs unit",
+    "test:integration": "node scripts/run-tests.mjs integration",
+    "test:all": "npm test && npm run test:integration",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "dotnet",
+    "csharp",
+    "esm",
+    "node",
+    "runtime",
+    "sdk",
+    "interop"
+  ],
+  "license": "MIT"
+}

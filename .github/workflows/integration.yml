@@ -1,0 +1,35 @@
+name: Portable .NET Integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'bridge/**'
+      - 'test/integration/**'
+      - 'test/fixtures/**'
+      - '.github/workflows/integration.yml'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      NODENET_INTEGRATION: '1'
+      NODENET_TEST_SDK: '10.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --ignore-scripts
+      - name: Prove NodeNET managed provisioning and bridge
+        run: npm run test:integration
