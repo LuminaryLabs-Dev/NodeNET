@@ -150,6 +150,39 @@ After the push:
 3. re-open package, facade, CLI, kernel/services, interop, README, and the canonical state docs from live `main`
 4. inspect CI results when observable
 
+## Observed 0.3.1 closeout evidence — 2026-08-22
+
+The closeout sandbox had Node.js 22 and TypeScript available, but no usable local `dotnet` executable and no external package network suitable for real SDK/NuGet/Avalonia acceptance.
+
+Observed locally:
+
+| Gate | Result |
+| --- | --- |
+| Focused closeout regression suite | PASS — 30/30 |
+| Reconstructed local candidate `npm test` subset | PASS — 22/22 |
+| Reconstructed local candidate `npm run check` | PASS |
+| TypeScript declaration compile (`tsc --noEmit`) | PASS |
+| `nodenet --version` | PASS — `NodeNET 0.3.1` |
+| `nodenet --help` / `nodenet build --help` | PASS without .NET provisioning |
+| `npm pack --dry-run` | PASS using a writable temporary npm cache |
+| packed tarball install in a separate consumer project | PASS |
+| packed CLI `--version` / `--help` | PASS |
+| packed package-root ESM import | PASS |
+| real private .NET provisioning/build/run in this sandbox | NOT RUN — no usable local .NET/network |
+| real CLR bridge execution in this sandbox | NOT RUN — no usable local .NET |
+| real Avalonia headless/render acceptance in this sandbox | NOT RUN — requires network-backed .NET/NuGet runner |
+
+The local reconstruction was used to exercise the authored hardening paths and package boundary; it is not a substitute for the repository's complete Windows/macOS/Linux workflow suite. The live Git tree still contains the full historical unit, portable integration, and Avalonia acceptance tests, and those network-backed results must be reported separately when observable.
+
+GitHub connector observation for the closeout push:
+
+- branch/ref verification: PASS
+- final implementation commit matched `main` at `0 ahead / 0 behind` before this evidence-only documentation update
+- push-triggered combined status list: no statuses exposed by the connector
+- commit workflow-run lookup: no runs exposed by the connector
+
+An empty connector result is **not** treated as a successful CI result.
+
 ## Current sandbox limitation
 
-The ChatGPT sandbox used during the 0.3.1 closeout can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for the network-backed real .NET/Avalonia acceptance jobs. Those gates must remain explicitly unverified until a capable runner reports them.
+The ChatGPT sandbox used during the 0.3.1 closeout can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for the network-backed real .NET/Avalonia acceptance jobs. Those gates remain explicitly unverified until a capable runner reports them.
