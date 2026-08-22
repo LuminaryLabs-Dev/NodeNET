@@ -4,7 +4,7 @@ NodeNET grows by preserving a small core and adding only abstractions that corre
 
 ## 0.3.x — Hardening and portability proof
 
-Current focus:
+Delivered by 0.3.2:
 
 - cohesive `nodenet` CLI and JavaScript facade
 - official private .NET provisioning
@@ -16,7 +16,7 @@ Current focus:
 - managed-.NET frame submission and real Avalonia input/render acceptance
 - real Windows/macOS/Linux portable and Avalonia acceptance
 
-Scope guard: do not add speculative execution providers or framework semantics while this foundation is still being validated.
+Maintenance rule: keep these portability, package, display, and framework acceptance gates green while 0.4.0 work proceeds; do not add speculative execution providers or framework semantics to the 0.3.x foundation.
 
 ## 0.4.0 — Bidirectional CLR interoperability
 

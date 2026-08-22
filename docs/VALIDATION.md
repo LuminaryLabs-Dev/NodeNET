@@ -169,13 +169,14 @@ After the push:
 3. re-open package, facade, CLI, kernel/services, interop, README, and the canonical state docs from live `main`
 4. inspect CI results when observable
 
-## Observed 0.3.2 candidate evidence — 2026-08-22
+## Observed 0.3.2 closeout evidence — 2026-08-22
 
-The candidate was exercised with Node.js 24.19.0. The local sandbox did not provide a .NET executable, and its outbound policy blocked SDK/NuGet acquisition, so real managed .NET and Avalonia execution remain CI gates rather than inferred successes.
+The final implementation tree was exercised locally with Node.js 24.19.0 and on GitHub-hosted Ubuntu, Windows, and macOS runners. The local sandbox did not provide a .NET executable and could not acquire the SDK or NuGet packages, so the linked workflow runs—not inference—supply the network-backed managed .NET and Avalonia evidence.
 
 | Gate | Result |
 | --- | --- |
-| Full Node unit/static suite | PASS — 66/66 |
+| Full Node unit/static suite | PASS — 67/67 |
+| Hosted Node matrix | PASS — Node 20/22 on Ubuntu, Windows, and macOS ([run 32598116139](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116139)) |
 | Software framebuffer calculator | PASS — `12 + 7 = 19` |
 | Initial/expression/result PNG evidence | PASS — distinct pixel SHA-256 values and visual inspection |
 | Binary display process handshake, frame, input, and disposal | PASS |
@@ -184,8 +185,15 @@ The candidate was exercised with Node.js 24.19.0. The local sandbox did not prov
 | Clean tarball consumer: ESM display API and exact pixels | PASS |
 | Clean tarball consumer: PNG and validation harness | PASS |
 | Packed CLI `--version` / `--help` | PASS |
-| Packed TypeScript declarations (`tsc --noEmit`) | PASS |
+| Packed TypeScript declarations (strict `NodeNext`, `tsc --noEmit`) | PASS |
 | Package generated-content and required-file audit | PASS — 83 intended entries |
+| Ubuntu portable managed .NET/C# bridge | PASS ([run 32598116155](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116155)) |
+| Windows portable managed .NET/C# bridge | PASS ([run 32598116155](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116155)) |
+| macOS portable managed .NET/C# bridge | PASS ([run 32598116155](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116155)) |
+| Ubuntu real Avalonia input/render/screenshots | PASS ([run 32598116146](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116146)) |
+| Windows real Avalonia input/render/screenshots | PASS ([run 32598116146](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116146)) |
+| macOS real Avalonia input/render/screenshots | PASS ([run 32598116146](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/32598116146)) |
+| ARM/musl acceptance | NOT RUN — implemented identities remain unverified on matching runners |
 | Portable managed .NET fixture in this sandbox | NOT RUN — SDK acquisition blocked by sandbox policy |
 | Real Avalonia calculator in this sandbox | NOT RUN — requires managed .NET and NuGet access |
 
@@ -195,7 +203,13 @@ The software proof records these frame-pixel hashes:
 - expression: `0872798d7b01885c6be1d5eeaa20b7545f3eaf97035f2b4d736504730593205e`
 - result: `8a5d27e55c85bf4497c570d41a97235baaa2e33c5b1f96c4025913b31b1ddc03`
 
-The repository workflows must supply the non-local evidence: portable C# submission on Ubuntu, Windows, and macOS, plus real Avalonia rendering/input/screenshots on the same three operating systems. An absent or unavailable workflow result is not treated as a pass.
+The final Linux Avalonia artifact records these raw frame-pixel hashes:
+
+- initial: `f571229cda0a2a0246f7547c7a51b9a84e32292e654370e9397c746dc85febf6`
+- expression: `9b88644064f308c82d59c6708b4a7a2f2af5642537838aca0a7b3104f6c03f37`
+- result: `48f78249b9008405b0704a78100565481d50ff2050bec5e3764d11433234d8f5`
+
+Its `verification.json` reports `framework = Avalonia`, `managedDotnet = true`, `inputRoundTrip = true`, `expected = actual = 19`, `changed = true`, and `pass = true`. The 420×640 RGBA8 initial, expression, and result PNGs were also opened and visually inspected. The portable workflow separately proves private SDK provisioning, real C# execution, exact frame bytes, Node pointer input, changed C# state, changed pixels, the packed CLI, and a clean consumer project on all three hosted operating systems.
 
 ## Observed 0.3.1 closeout evidence — 2026-08-22
 
@@ -232,4 +246,4 @@ An empty connector result is **not** treated as a successful CI result.
 
 ## Current sandbox limitation
 
-The ChatGPT sandbox used during the 0.3.1 and 0.3.2 closeouts can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for the network-backed real .NET/Avalonia acceptance jobs. Those gates remain explicitly unverified until a capable runner reports them.
+The ChatGPT sandbox used during the 0.3.1 and 0.3.2 closeouts can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for network-backed real .NET/Avalonia acceptance. For 0.3.2, the exact linked GitHub-hosted runs supply that evidence; this limitation records where the work ran rather than leaving those release gates unverified.

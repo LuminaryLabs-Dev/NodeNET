@@ -192,7 +192,7 @@ Avalonia is the first real DisplayService acceptance adapter and remains a valid
 
 ## Validation
 
-The canonical validation procedure and the distinction between locally proven and network-backed gates are in [`VALIDATION.md`](VALIDATION.md).
+The 0.3.2 closeout passes the full local Node/software/package gates and the hosted portable-.NET and real-Avalonia acceptance matrices on Windows, macOS, and Linux. The canonical procedure, linked workflow runs, frame hashes, screenshot evidence, and distinction between locally proven and network-backed gates are in [`VALIDATION.md`](VALIDATION.md).
 
 ## Next milestone
 

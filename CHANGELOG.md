@@ -8,6 +8,8 @@
 - Added binary process-frame transport and the framework-neutral `NodeNET.Display` C# helper.
 - Added deterministic software, managed-.NET, and real Avalonia calculator acceptance paths for `12 + 7 = 19`.
 - Added screenshot artifacts to software and Avalonia CI validation.
+- Completed the portable-.NET and real-Avalonia acceptance matrices on hosted Windows, macOS, and Linux runners.
+- Hardened packed-consumer validation and declaration routing for strict modern TypeScript module resolution.
 - Repaired truncated CLI source files that prevented the existing `0.3.1` unit/static gate from completing.
 
 ## 0.3.1 — Developer Preview
