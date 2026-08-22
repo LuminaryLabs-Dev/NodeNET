@@ -22,7 +22,9 @@ test('NodeNET drives and captures a real Avalonia calculator through DisplayServ
     await net.exec(['new', 'avalonia.app', '-o', 'App'], { cwd: work });
     const appDir = path.join(work, 'App');
     const project = path.join(appDir, 'App.csproj');
-    const displayHelper = path.join(root, 'bridge', 'NodeNET.Display', 'NodeNET.Display.csproj');
+    const displayHelperDir = path.join(work, 'NodeNET.Display');
+    await fs.cp(path.join(root, 'bridge', 'NodeNET.Display'), displayHelperDir, { recursive: true });
+    const displayHelper = path.join(displayHelperDir, 'NodeNET.Display.csproj');
     const projectSource = await fs.readFile(project, 'utf8');
     const configuredTarget = projectSource.replace(/<TargetFramework>[^<]+<\/TargetFramework>/, '<TargetFramework>net10.0</TargetFramework>');
     assert.match(configuredTarget, /<TargetFramework>net10\.0<\/TargetFramework>/);
@@ -198,9 +200,14 @@ internal static class Program
 
     const app = await NodeNET.attach(project, { mode: 'shared', home, isolation: 'managed', sdk, writeState: false });
     try {
-      const prepared = await app.prepare();
+      const prepared = await app.prepare({ restore: false });
       assert.equal(prepared.ready, true);
-      const build = await app.exec(['build', project, '--nologo', '--no-restore'], {
+      const restore = await app.exec(['restore', project, '--nologo', '-p:NodeNETTargetFramework=net10.0'], {
+        cwd: appDir,
+        rejectOnNonZero: false
+      });
+      assert.equal(restore.ok, true, `exit=${restore.exitCode}\nstdout:\n${restore.stdout}\nstderr:\n${restore.stderr}`);
+      const build = await app.exec(['build', project, '--nologo', '--no-restore', '-p:NodeNETTargetFramework=net10.0'], {
         cwd: appDir,
         rejectOnNonZero: false
       });

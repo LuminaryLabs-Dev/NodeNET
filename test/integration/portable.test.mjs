@@ -107,8 +107,8 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
     } finally { await library.close(); }
 
     const displayProject = path.join(fixtures, 'display-dotnet', 'DisplayFixture.csproj');
-    await net.exec(['restore', displayProject, '--nologo'], { cwd: path.dirname(displayProject) });
-    const displayBuild = await net.exec(['build', displayProject, '--nologo', '--no-restore'], {
+    await net.exec(['restore', displayProject, '--nologo', '-p:NodeNETTargetFramework=net10.0'], { cwd: path.dirname(displayProject) });
+    const displayBuild = await net.exec(['build', displayProject, '--nologo', '--no-restore', '-p:NodeNETTargetFramework=net10.0'], {
       cwd: path.dirname(displayProject),
       rejectOnNonZero: false
     });
