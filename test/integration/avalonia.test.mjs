@@ -229,7 +229,7 @@ internal static class Program
         rejectOnNonZero: false
       });
       assert.equal(build.ok, true, `exit=${build.exitCode}\nstdout:\n${build.stdout}\nstderr:\n${build.stderr}`);
-      const handle = await app.run({ binaryStdout: true });
+      const handle = await app.run({ binaryStdout: true, passthrough: ['--no-build'] });
       const surface = await app.display({ process: handle });
       const harness = new DisplayValidationHarness(surface, { outputDirectory: output, timeout: 30_000 });
       const ready = await harness.waitForReady();
