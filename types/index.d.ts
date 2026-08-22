@@ -157,6 +157,7 @@ export class FrameSurface {
   readonly sequence: number;
   readonly readyInfo: any;
   readonly lastState: any;
+  readonly failure: Error | null;
   readonly disposed: boolean;
   submit(frame: Frame | FrameOptions): Frame;
   present(metadata?: Record<string, any>): { sequence: number; metadata: Record<string, any>; frame: Frame };
@@ -170,7 +171,7 @@ export class FrameSurface {
   dispose(options?: { notify?: boolean }): Promise<void>;
   on(event: 'frame', listener: (frame: Frame) => void): this;
   on(event: 'present', listener: (presentation: any) => void): this;
-  on(event: 'pointer' | 'key' | 'ready' | 'state' | 'resize' | 'close', listener: (...args: any[]) => void): this;
+  on(event: 'pointer' | 'key' | 'ready' | 'state' | 'resize' | 'failure' | 'close', listener: (...args: any[]) => void): this;
   once(event: 'close' | 'ready' | 'present', listener: (...args: any[]) => void): this;
 }
 

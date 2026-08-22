@@ -26,3 +26,13 @@ test('process display adapter receives frames and sends normalized input', { tim
   const exit = await handle.wait();
   assert.equal(exit.ok, true, exit.stderr);
 });
+
+test('process display adapter rejects readiness when the graphical child exits', { timeout: 10_000 }, async () => {
+  const handle = spawnManagedProcess(process.execPath, ['-e', "process.stderr.write('fixture startup failed'); process.exit(2)"], { binaryStdout: true });
+  const display = new SoftwareDisplayService();
+  const surface = display.connectProcess(handle);
+  await assert.rejects(() => surface.waitForReady(), /fixture startup failed/);
+  const exit = await handle.wait();
+  assert.equal(exit.exitCode, 2);
+  await display.dispose();
+});

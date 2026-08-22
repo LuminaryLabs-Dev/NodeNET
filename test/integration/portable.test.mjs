@@ -30,6 +30,18 @@ function processEvidence(result) {
   return `exit=${result.exitCode}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`;
 }
 
+async function shutdownBuildServers(net) {
+  try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false, timeout: 15_000 }); } catch {}
+}
+
+async function removeWorkspace(directory) {
+  try {
+    await fs.rm(directory, { recursive: true, force: true, maxRetries: 4, retryDelay: 250 });
+  } catch (error) {
+    if (process.platform !== 'win32' || !['EBUSY', 'EPERM'].includes(error.code)) throw error;
+  }
+}
+
 test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers the packed CLI', { skip: !enabled, timeout: 20 * 60_000 }, async () => {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'nodenet-integration-'));
   const home = path.join(work, 'home');
@@ -180,8 +192,8 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
     assert.equal(run.code, 0, run.stderr);
     assert.match(run.stdout, /Hello, World!/i);
   } finally {
-    try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
+    await shutdownBuildServers(net);
     await net.dispose();
-    await fs.rm(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
+    await removeWorkspace(work);
   }
 });

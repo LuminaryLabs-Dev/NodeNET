@@ -10,6 +10,7 @@ export class ProcessDisplayAdapter extends EventEmitter {
     if (!processHandle?.write || !processHandle?.on) throw new TypeError('ProcessDisplayAdapter requires a live ProcessHandle.');
     if (processHandle.binaryStdout !== true) throw new TypeError('Display protocol processes must be started with binaryStdout: true.');
     this.process = processHandle;
+    this.closing = false;
     this.client = new ProtocolClient(new StdioTransport(processHandle));
     this.surface = display.createSurface({
       id,
@@ -21,7 +22,7 @@ export class ProcessDisplayAdapter extends EventEmitter {
         pointer: input => this.#request('display.pointer', { input }),
         key: input => this.#request('display.key', { input }),
         resize: size => this.#request('display.resize', size),
-        dispose: () => this.#request('display.dispose')
+        dispose: () => this.#dispose()
       }
     });
 
@@ -30,6 +31,10 @@ export class ProcessDisplayAdapter extends EventEmitter {
     this.client.on('display.state', payload => this.surface.markState(payload));
     this.client.on('protocolError', error => this.emit('protocolError', error));
     this.client.on('exit', result => {
+      if (!this.closing && !this.surface.disposed) {
+        const detail = result.stderr ? `\n${result.stderr.trim()}` : '';
+        this.surface.markFailure(new Error(`Display process exited with code ${result.exitCode}.${detail}`));
+      }
       if (!this.surface.disposed) this.surface.dispose({ notify: false }).catch(error => this.emit('protocolError', error));
       this.emit('exit', result);
     });
@@ -42,6 +47,11 @@ export class ProcessDisplayAdapter extends EventEmitter {
     const response = await this.client.request(operation, { surface: this.surface.id, ...fields });
     if (response.result?.state !== undefined) this.surface.markState(response.result.state);
     return response.result;
+  }
+
+  async #dispose() {
+    this.closing = true;
+    return this.#request('display.dispose');
   }
 
   async #ready(payload = {}) {

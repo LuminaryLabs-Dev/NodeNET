@@ -10,6 +10,18 @@ const enabled = process.env.NODENET_AVALONIA === '1';
 const sdk = process.env.NODENET_TEST_SDK ?? '10.0';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
+async function shutdownBuildServers(net) {
+  try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false, timeout: 15_000 }); } catch {}
+}
+
+async function removeWorkspace(directory) {
+  try {
+    await fs.rm(directory, { recursive: true, force: true, maxRetries: 4, retryDelay: 250 });
+  } catch (error) {
+    if (process.platform !== 'win32' || !['EBUSY', 'EPERM'].includes(error.code)) throw error;
+  }
+}
+
 test('NodeNET drives and captures a real Avalonia calculator through DisplayService', { skip: !enabled, timeout: 25 * 60_000 }, async () => {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'nodenet-avalonia-'));
   const home = path.join(work, 'home');
@@ -252,12 +264,12 @@ internal static class Program
       const run = await handle.wait();
       assert.equal(run.ok, true, run.stderr);
     } finally {
-      try { await app.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
+      await shutdownBuildServers(app);
       await app.dispose();
     }
   } finally {
-    try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
+    await shutdownBuildServers(net);
     await net.dispose();
-    await fs.rm(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
+    await removeWorkspace(work);
   }
 });

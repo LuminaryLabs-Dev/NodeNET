@@ -26,6 +26,7 @@ export class FrameSurface extends EventEmitter {
     this.presentedMetadata = null;
     this.readyInfo = null;
     this.lastState = null;
+    this.failure = null;
     this.disposed = false;
   }
 
@@ -112,29 +113,58 @@ export class FrameSurface extends EventEmitter {
     return this.lastState;
   }
 
+  markFailure(error) {
+    if (this.disposed) return this.failure;
+    this.failure = error instanceof Error ? error : new Error(String(error));
+    this.emit('failure', this.failure);
+    return this.failure;
+  }
+
   async waitForReady({ timeout = 10_000 } = {}) {
+    if (this.failure) throw this.failure;
+    this.#active();
     if (this.readyInfo) return this.readyInfo;
     return new Promise((resolve, reject) => {
-      const ready = info => { clearTimeout(timer); resolve(info); };
-      const timer = setTimeout(() => {
+      const cleanup = () => {
+        clearTimeout(timer);
         this.off('ready', ready);
+        this.off('failure', failed);
+        this.off('close', closed);
+      };
+      const ready = info => { cleanup(); resolve(info); };
+      const failed = error => { cleanup(); reject(error); };
+      const closed = () => { cleanup(); reject(new Error(`Display surface ${this.id} closed before becoming ready.`)); };
+      const timer = setTimeout(() => {
+        cleanup();
         reject(new Error(`Timed out waiting for display surface ${this.id} to become ready.`));
       }, timeout);
-      timer.unref?.();
       this.once('ready', ready);
+      this.once('failure', failed);
+      this.once('close', closed);
     });
   }
 
   async waitForFrame({ afterSequence = this.sequence, timeout = 10_000 } = {}) {
+    if (this.failure) throw this.failure;
+    this.#active();
     if (this.sequence > afterSequence) return this.capture();
     return new Promise((resolve, reject) => {
-      const presented = presentation => { clearTimeout(timer); resolve(presentation.frame.clone()); };
-      const timer = setTimeout(() => {
+      const cleanup = () => {
+        clearTimeout(timer);
         this.off('present', presented);
+        this.off('failure', failed);
+        this.off('close', closed);
+      };
+      const presented = presentation => { cleanup(); resolve(presentation.frame.clone()); };
+      const failed = error => { cleanup(); reject(error); };
+      const closed = () => { cleanup(); reject(new Error(`Display surface ${this.id} closed before presenting a frame.`)); };
+      const timer = setTimeout(() => {
+        cleanup();
         reject(new Error(`Timed out waiting for a frame on display surface ${this.id}.`));
       }, timeout);
-      timer.unref?.();
       this.once('present', presented);
+      this.once('failure', failed);
+      this.once('close', closed);
     });
   }
 
