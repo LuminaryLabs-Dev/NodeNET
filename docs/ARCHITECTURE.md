@@ -10,12 +10,12 @@ JavaScript API       nodenet CLI
               |
         service kernel
               |
-  +-----------+-----------+
-  |           |           |
-Environment Execution   Interop
-  |           |           |
-providers    providers   providers
-  +-----------+-----------+
+  +-----------+-----------+-----------+
+  |           |           |           |
+Environment Execution   Interop     Display
+  |           |           |           |
+providers    providers   providers   providers
+  +-----------+-----------+-----------+
               |
         official .NET
 ```
@@ -28,7 +28,7 @@ The core stays small as new capabilities are added: stable service contracts in 
 
 ## Services and contracts
 
-The stable capability names are `host`, `environment`, `execution`, `project`, `interop`, and `capabilities`.
+The stable capability names are `host`, `environment`, `execution`, `project`, `interop`, `display`, and `capabilities`.
 
 The kernel validates known provider contracts at initialization. The current minimum contracts are:
 
@@ -37,6 +37,7 @@ The kernel validates known provider contracts at initialization. The current min
 - execution: `exec()`, `spawn()`, `kind`, `sandboxed`
 - project: `inspect()`, `prepare()`, `restore()`, `build()`, `test()`, `publish()`, `clean()`, `run()`
 - interop: `openLibrary()`
+- display: `capabilities()`, `createSurface()`
 - capabilities: `snapshot()`
 
 This is intentionally not a dependency-injection framework; it is a small provider boundary.
@@ -74,3 +75,18 @@ CoreCLR
 ```
 
 The bridge uses values, persistent object/stream handles, and descriptors. Deterministic CLR signatures can be selected explicitly when overload inference is insufficient.
+
+## Display boundary
+
+NodeNET core owns `Frame`, `FrameSurface`, normalized input, and binary frame transport. The canonical V1 representation is owned RGBA8 memory with `stride = width * 4`.
+
+The default software provider is a lazy universal fallback. Framework-specific renderers stay outside core:
+
+```text
+Avalonia / Skia / virtual display
+              -> RGBA8 Frame
+              -> FrameSurface
+              -> Node
+```
+
+The C# display helper speaks the same framed standard-I/O protocol as the Node process adapter. It is framework-neutral and does not introduce a UI dependency.

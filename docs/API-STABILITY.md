@@ -17,6 +17,10 @@ clean()
 run()
 exec()
 library()
+display()
+capabilities()
+doctor()
+environment()
 dispose()
 ```
 
@@ -29,6 +33,7 @@ The following may evolve before `1.0`:
 - protocol-specific APIs
 - capability report schemas
 - custom execution providers
+- low-level `Frame`, `FrameSurface`, rasterizer, process-display adapter, and display-validation harness APIs
 
 ## Internal
 

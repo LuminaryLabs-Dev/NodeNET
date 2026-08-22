@@ -41,6 +41,7 @@ export class NodeNET {
     this.context = null;
     this.processes = new Set();
     this.libraries = new Set();
+    this.surfaces = new Set();
   }
 
   async info() {
@@ -107,6 +108,15 @@ export class NodeNET {
     return handle;
   }
 
+  async display(options = {}) {
+    const surface = options.process
+      ? this.services.display.connectProcess(options.process, options)
+      : this.services.display.createSurface(options);
+    this.surfaces.add(surface);
+    surface.once('close', () => this.surfaces.delete(surface));
+    return surface;
+  }
+
   async capabilities({ prepare = false } = {}) {
     let context = this.context;
     let targetInfo = context?.targetInfo ?? null;
@@ -119,7 +129,7 @@ export class NodeNET {
       targetInfo = await this.services.project.inspect(this.target);
       host = this.services.host.detect();
     }
-    return this.services.capabilities.snapshot({ context, targetInfo, host, execution: this.services.execution });
+    return this.services.capabilities.snapshot({ context, targetInfo, host, execution: this.services.execution, display: this.services.display });
   }
 
   async doctor() {
@@ -140,10 +150,12 @@ export class NodeNET {
   }
 
   async dispose() {
+    await Promise.allSettled([...this.surfaces].map(surface => surface.dispose()));
     await Promise.allSettled([...this.libraries].map(handle => handle.close()));
     await Promise.allSettled([...this.processes].map(handle => handle.stop()));
     this.libraries.clear();
     this.processes.clear();
+    this.surfaces.clear();
     if (this.context?.paths?.temporary) await fs.rm(this.context.paths.baseDir, { recursive: true, force: true });
     this.context = null;
     await this.kernel?.dispose?.();

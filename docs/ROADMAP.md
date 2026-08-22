@@ -12,6 +12,8 @@ Current focus:
 - explicit trust metadata
 - package/TypeScript/OSS polish
 - CLR values, handles, descriptors, binary payloads, and streams
+- zero-dependency DisplayService, RGBA8 frames, normalized input, and PNG evidence
+- managed-.NET frame submission and real Avalonia input/render acceptance
 - real Windows/macOS/Linux portable and Avalonia acceptance
 
 Scope guard: do not add speculative execution providers or framework semantics while this foundation is still being validated.

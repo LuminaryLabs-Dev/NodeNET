@@ -4,6 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawn } from 'node:child_process';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { NodeNET } from '../../src/index.js';
 
@@ -101,6 +102,38 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
       await assert.rejects(() => counter.get('Value'));
     } finally { await library.close(); }
 
+    const displayProject = path.join(fixtures, 'display-dotnet', 'DisplayFixture.csproj');
+    await net.exec(['restore', displayProject, '--nologo'], { cwd: path.dirname(displayProject) });
+    await net.exec(['build', displayProject, '--nologo', '--no-restore'], { cwd: path.dirname(displayProject) });
+    const displayAssembly = path.join(path.dirname(displayProject), 'bin', 'Debug', 'net10.0', 'DisplayFixture.dll');
+    const displayNet = await NodeNET.attach(displayAssembly, {
+      mode: 'temporary',
+      dotnetPath: context.dotnet.path,
+      env: context.dotnet.env,
+      writeState: false
+    });
+    try {
+      const handle = await displayNet.run({ binaryStdout: true });
+      const surface = await displayNet.display({ process: handle });
+      const ready = await surface.waitForReady();
+      assert.equal(ready.metadata.fixture, 'managed-dotnet');
+      const initial = await surface.waitForFrame({ afterSequence: 0 });
+      assert.equal(initial.width, 4);
+      assert.equal(initial.height, 2);
+      assert.equal(initial.stride, 16);
+      assert.equal(initial.format, 'rgba8');
+      assert.deepEqual([...initial.pixels.subarray(0, 8)], [255, 0, 0, 255, 0, 255, 0, 255]);
+      assert.equal(crypto.createHash('sha256').update(initial.pixels).digest('hex'), 'ad8558af4bb65a77a12c8ffce48b69845a16629bb24f2b2b4731475ceefac73f');
+      const beforeInput = surface.sequence;
+      const inputResult = await surface.pointer({ type: 'click', x: 1, y: 1, button: 0 });
+      assert.equal(inputResult.state.display, 'changed');
+      const changed = await surface.waitForFrame({ afterSequence: beforeInput });
+      assert.deepEqual([...changed.pixels.subarray(0, 4)], [17, 34, 51, 255]);
+      await surface.dispose();
+      const processResult = await handle.wait();
+      assert.equal(processResult.ok, true, processResult.stderr);
+    } finally { await displayNet.dispose(); }
+
     const pack = await exec(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['pack', '--pack-destination', work], { cwd: root });
     assert.equal(pack.code, 0, pack.stderr);
     const tarballName = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
@@ -118,7 +151,7 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
 
     const version = await exec(process.execPath, [packedCli, '--version'], { cwd: consumer, env: cliEnv });
     assert.equal(version.code, 0, version.stderr);
-    assert.match(version.stdout, /^NodeNET 0\.3\.1/m);
+    assert.match(version.stdout, /^NodeNET 0\.3\.2/m);
 
     const help = await exec(process.execPath, [packedCli, 'build', '--help'], { cwd: consumer, env: cliEnv });
     assert.equal(help.code, 0, help.stderr);

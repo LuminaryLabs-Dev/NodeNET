@@ -18,11 +18,13 @@ const required = [
   'src/index.js','src/nodenet.js','src/version.js','src/cache.js',
   'src/kernel/registry.js','src/services/names.js','src/services/contracts.js',
   'src/services/execution.js','src/services/environment.js','src/services/project.js',
+  'src/services/display.js','src/plugins/display-software.js','src/display/frame.js','src/display/surface.js',
+  'src/display/rasterizer.js','src/display/input.js','src/display/png.js','src/display/process-adapter.js','src/display/validation.js',
   'src/cli/cli.js','src/cli/help.js','src/cli/progress.js',
   'src/interop/protocol/framing.js','src/dotnet/provision.js','src/project/prepare.js',
-  'bridge/NodeNET.Bridge/NodeNET.Bridge.csproj','types/index.d.ts',
+  'bridge/NodeNET.Bridge/NodeNET.Bridge.csproj','bridge/NodeNET.Display/NodeNET.Display.csproj','bridge/NodeNET.Display/NodeNETDisplay.cs','types/index.d.ts',
   'CHANGELOG.md','CONTRIBUTING.md','SECURITY.md','CODE_OF_CONDUCT.md',
-  'docs/CURRENT_STATE.md','docs/VALIDATION.md','docs/ROADMAP.md'
+  'docs/CURRENT_STATE.md','docs/DISPLAY.md','docs/VALIDATION.md','docs/ROADMAP.md'
 ];
 for (const relative of required) await fs.access(path.join(root, relative));
 

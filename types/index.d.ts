@@ -28,6 +28,7 @@ export interface Diagnostic {
 export interface ProcessHandle {
   running: boolean;
   pid?: number;
+  readonly binaryStdout: boolean;
   stdout: string;
   stderr: string;
   write(data: string | Uint8Array): boolean;
@@ -82,7 +83,134 @@ export interface OperationOptions {
   noRestore?: boolean;
   passthrough?: string[];
   properties?: Record<string, string | number | boolean>;
+  binaryStdout?: boolean;
+  maxBuffer?: number;
 }
+
+export type DisplayFormat = 'rgba8';
+
+export interface FrameOptions {
+  width: number;
+  height: number;
+  stride?: number;
+  format?: DisplayFormat;
+  pixels?: Uint8Array | ArrayBuffer;
+  maxBytes?: number;
+}
+
+export interface PointerInput {
+  type: 'move' | 'down' | 'up' | 'click';
+  x: number;
+  y: number;
+  button?: number;
+  modifiers?: { alt?: boolean; control?: boolean; meta?: boolean; shift?: boolean };
+}
+
+export interface KeyInput {
+  type: 'down' | 'up' | 'text';
+  key?: string;
+  code?: string;
+  modifiers?: { alt?: boolean; control?: boolean; meta?: boolean; shift?: boolean };
+}
+
+export class Frame {
+  constructor(options: FrameOptions);
+  readonly width: number;
+  readonly height: number;
+  readonly stride: number;
+  readonly format: DisplayFormat;
+  readonly pixels: Uint8Array;
+  readonly byteLength: number;
+  clone(): Frame;
+}
+
+export class SoftwareRasterizer {
+  constructor(frame: Frame);
+  readonly frame: Frame;
+  clear(rgba?: ArrayLike<number>): this;
+  pixel(x: number, y: number, rgba: ArrayLike<number>): this;
+  line(x0: number, y0: number, x1: number, y1: number, rgba: ArrayLike<number>): this;
+  fillRect(x: number, y: number, width: number, height: number, rgba: ArrayLike<number>): this;
+  roundedRect(x: number, y: number, width: number, height: number, radius: number, rgba: ArrayLike<number>): this;
+  blit(source: Frame, x: number, y: number): this;
+  text(value: string, x: number, y: number, rgba: ArrayLike<number>, options?: { scale?: number; spacing?: number }): this;
+  measureText(value: string, options?: { scale?: number; spacing?: number }): { width: number; height: number };
+}
+
+export interface DisplaySurfaceOptions {
+  id?: string;
+  width: number;
+  height: number;
+  format?: DisplayFormat;
+  maxFrameBytes?: number;
+  process?: ProcessHandle;
+}
+
+export class FrameSurface {
+  readonly id: string;
+  width: number;
+  height: number;
+  stride: number;
+  readonly format: DisplayFormat;
+  readonly maxFrameBytes: number;
+  readonly allocated: boolean;
+  readonly sequence: number;
+  readonly readyInfo: any;
+  readonly lastState: any;
+  readonly disposed: boolean;
+  submit(frame: Frame | FrameOptions): Frame;
+  present(metadata?: Record<string, any>): { sequence: number; metadata: Record<string, any>; frame: Frame };
+  capture(): Frame;
+  rasterizer(): SoftwareRasterizer;
+  resize(width: number, height: number, options?: { notify?: boolean }): Promise<this>;
+  pointer(event: PointerInput): Promise<any>;
+  key(event: KeyInput): Promise<any>;
+  waitForReady(options?: { timeout?: number }): Promise<any>;
+  waitForFrame(options?: { afterSequence?: number; timeout?: number }): Promise<Frame>;
+  dispose(options?: { notify?: boolean }): Promise<void>;
+  on(event: 'frame', listener: (frame: Frame) => void): this;
+  on(event: 'present', listener: (presentation: any) => void): this;
+  on(event: 'pointer' | 'key' | 'ready' | 'state' | 'resize' | 'close', listener: (...args: any[]) => void): this;
+  once(event: 'close' | 'ready' | 'present', listener: (...args: any[]) => void): this;
+}
+
+export class SoftwareDisplayService {
+  readonly kind: 'software-framebuffer';
+  readonly headless: true;
+  readonly maxFrameBytes: number;
+  capabilities(): any;
+  createSurface(options: DisplaySurfaceOptions): FrameSurface;
+  connectProcess(processHandle: ProcessHandle, options?: Partial<DisplaySurfaceOptions>): FrameSurface;
+  dispose(): Promise<void>;
+}
+
+export class ProcessDisplayAdapter {
+  constructor(display: SoftwareDisplayService, processHandle: ProcessHandle, options?: Partial<DisplaySurfaceOptions>);
+  readonly process: ProcessHandle;
+  readonly surface: FrameSurface;
+}
+
+export class DisplayValidationHarness {
+  constructor(surface: FrameSurface, options?: { outputDirectory?: string | null; timeout?: number });
+  readonly surface: FrameSurface;
+  readonly outputDirectory: string | null;
+  readonly timeout: number;
+  readonly captures: ReadonlyArray<{ name: string; width: number; height: number; format: DisplayFormat; sha256: string }>;
+  waitForReady(): Promise<any>;
+  pointer(input: PointerInput, options?: { expectFrame?: boolean }): Promise<any>;
+  key(input: KeyInput, options?: { expectFrame?: boolean }): Promise<any>;
+  capture(name: string): Promise<Frame>;
+  writeVerification(value: Record<string, any>, name?: string): Promise<Record<string, any>>;
+}
+
+export function frameLayout(options: FrameOptions): Readonly<{ width: number; height: number; stride: number; format: DisplayFormat; byteLength: number }>;
+export function normalizePointerEvent(event: PointerInput): Readonly<Required<PointerInput>>;
+export function normalizeKeyEvent(event: KeyInput): Readonly<KeyInput>;
+export function encodePng(frame: Frame): Uint8Array;
+export function savePng(frame: Frame, file: string): Promise<{ file: string; bytes: number; width: number; height: number }>;
+export const DISPLAY_FORMAT: 'rgba8';
+export const MAX_FRAME_BYTES: number;
+export const MAX_FRAME_DIMENSION: number;
 
 export interface ExecutionService {
   kind: string;
@@ -201,6 +329,7 @@ export class NodeNET {
   run(options?: OperationOptions & { args?: string[] }): Promise<ProcessHandle>;
   exec(args: string[], options?: OperationOptions & { requireSdk?: boolean; rejectOnNonZero?: boolean }): Promise<ProcessResult>;
   library(assembly: string, options?: { cwd?: string; timeout?: number; signal?: AbortSignal }): Promise<LibraryHandle>;
+  display(options: DisplaySurfaceOptions | ({ process: ProcessHandle } & Partial<DisplaySurfaceOptions>)): Promise<FrameSurface>;
   capabilities(options?: { prepare?: boolean }): Promise<any>;
   doctor(): Promise<any>;
   environment(): any | null;
@@ -214,6 +343,8 @@ export class LocalExecutionService implements ExecutionService {
   exec(command: string, args?: string[], options?: Record<string, any>): Promise<ProcessResult>;
   spawn(command: string, args?: string[], options?: Record<string, any>): ProcessHandle;
 }
+
+export function softwareDisplayPlugin(options?: { maxFrameBytes?: number }): Readonly<NodeNETPlugin>;
 
 export class ServiceRegistry {
   provide(capability: string, service: any, options?: { plugin?: string; replace?: boolean }): any;
@@ -239,6 +370,7 @@ export const SERVICE: Readonly<{
   ENVIRONMENT: 'environment';
   PROJECT: 'project';
   INTEROP: 'interop';
+  DISPLAY: 'display';
   CAPABILITIES: 'capabilities';
 }>;
 

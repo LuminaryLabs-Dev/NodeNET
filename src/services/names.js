@@ -4,5 +4,6 @@ export const SERVICE = Object.freeze({
   ENVIRONMENT: 'environment',
   PROJECT: 'project',
   INTEROP: 'interop',
+  DISPLAY: 'display',
   CAPABILITIES: 'capabilities'
 });

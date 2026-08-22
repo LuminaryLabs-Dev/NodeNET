@@ -9,6 +9,8 @@ on:
       - 'bridge/**'
       - 'bin/**'
       - 'test/integration/avalonia.test.mjs'
+      - 'src/display/**'
+      - 'src/services/display.js'
       - '.github/workflows/framework.yml'
       - 'package.json'
       - 'package-lock.json'

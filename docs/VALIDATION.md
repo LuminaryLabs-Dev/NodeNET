@@ -12,6 +12,7 @@ From a clean checkout:
 npm ci --ignore-scripts
 npm test
 npm run check
+npm run test:display
 npm pack --dry-run
 ```
 
@@ -23,6 +24,18 @@ This gate proves:
 - the full unit suite passes
 - CLI routing, service contracts, trust gates, caching, framing, provisioning helpers, and other deterministic behaviors pass without requiring external .NET downloads
 - the npm package manifest contains the intended publish surface
+
+The software display proof must produce:
+
+```text
+artifacts/display/
+  calculator-initial.png
+  calculator-12-plus-7.png
+  calculator-result-19.png
+  verification.json
+```
+
+`verification.json` must report `expected = 19`, `actual = 19`, `changed = true`, and `pass = true`. This gate requires no .NET SDK, NuGet access, native window manager, or GPU.
 
 ## 2. Packed consumer gate
 
@@ -72,6 +85,9 @@ Required interop evidence:
 - raw binary round trip
 - remote stream chunk reads
 - explicit disposal and invalid-handle failure afterward
+- framework-neutral C# display helper startup
+- exact C# RGBA8 frame submission and SHA-256 verification in Node
+- Node pointer request returning changed C# state and a changed frame
 
 Real stdout/results must be asserted; exit code zero alone is insufficient.
 
@@ -89,11 +105,14 @@ NodeNET
 → Avalonia template/project
 → restore/build
 → headless startup
-→ UI state interaction
-→ PNG rendering
+→ DisplayService process handshake
+→ Node pointer input into real controls
+→ C# calculator state `12 + 7 = 19`
+→ real Avalonia RGBA8 frames
+→ PNG rendering and verification JSON
 ```
 
-Avalonia remains a validation workload above NodeNET rather than a core dependency.
+Avalonia remains a validation workload above NodeNET rather than a core dependency. The workflow must upload the initial, expression, and result screenshots even when the job fails so rendering failures remain inspectable.
 
 ## 5. Negative behavior
 
@@ -150,6 +169,34 @@ After the push:
 3. re-open package, facade, CLI, kernel/services, interop, README, and the canonical state docs from live `main`
 4. inspect CI results when observable
 
+## Observed 0.3.2 candidate evidence — 2026-08-22
+
+The candidate was exercised with Node.js 24.19.0. The local sandbox did not provide a .NET executable, and its outbound policy blocked SDK/NuGet acquisition, so real managed .NET and Avalonia execution remain CI gates rather than inferred successes.
+
+| Gate | Result |
+| --- | --- |
+| Full Node unit/static suite | PASS — 66/66 |
+| Software framebuffer calculator | PASS — `12 + 7 = 19` |
+| Initial/expression/result PNG evidence | PASS — distinct pixel SHA-256 values and visual inspection |
+| Binary display process handshake, frame, input, and disposal | PASS |
+| Workflow YAML and C# project XML parsing | PASS |
+| Package/lock/CLI version agreement | PASS — `0.3.2` |
+| Clean tarball consumer: ESM display API and exact pixels | PASS |
+| Clean tarball consumer: PNG and validation harness | PASS |
+| Packed CLI `--version` / `--help` | PASS |
+| Packed TypeScript declarations (`tsc --noEmit`) | PASS |
+| Package generated-content and required-file audit | PASS — 83 intended entries |
+| Portable managed .NET fixture in this sandbox | NOT RUN — SDK acquisition blocked by sandbox policy |
+| Real Avalonia calculator in this sandbox | NOT RUN — requires managed .NET and NuGet access |
+
+The software proof records these frame-pixel hashes:
+
+- initial: `d147bba954c1be5414c94928038a0090863e0966cbc76a136f09e80a15e0a9c7`
+- expression: `0872798d7b01885c6be1d5eeaa20b7545f3eaf97035f2b4d736504730593205e`
+- result: `8a5d27e55c85bf4497c570d41a97235baaa2e33c5b1f96c4025913b31b1ddc03`
+
+The repository workflows must supply the non-local evidence: portable C# submission on Ubuntu, Windows, and macOS, plus real Avalonia rendering/input/screenshots on the same three operating systems. An absent or unavailable workflow result is not treated as a pass.
+
 ## Observed 0.3.1 closeout evidence — 2026-08-22
 
 The closeout sandbox had Node.js 22 and TypeScript available, but no usable local `dotnet` executable and no external package network suitable for real SDK/NuGet/Avalonia acceptance.
@@ -185,4 +232,4 @@ An empty connector result is **not** treated as a successful CI result.
 
 ## Current sandbox limitation
 
-The ChatGPT sandbox used during the 0.3.1 closeout can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for the network-backed real .NET/Avalonia acceptance jobs. Those gates remain explicitly unverified until a capable runner reports them.
+The ChatGPT sandbox used during the 0.3.1 and 0.3.2 closeouts can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for the network-backed real .NET/Avalonia acceptance jobs. Those gates remain explicitly unverified until a capable runner reports them.

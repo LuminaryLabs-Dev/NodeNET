@@ -88,11 +88,11 @@ export function runTarget(context, options = {}) {
   if (context.targetInfo.kind === 'executable') {
     const execution = context.services?.execution;
     const spawn = execution?.spawn ? execution.spawn.bind(execution) : spawnManagedProcess;
-    return spawn(context.targetInfo.path,args,{cwd:options.cwd ?? context.targetInfo.directory,env:options.env ?? process.env,signal:options.signal});
+    return spawn(context.targetInfo.path,args,{cwd:options.cwd ?? context.targetInfo.directory,env:options.env ?? process.env,signal:options.signal,binaryStdout:options.binaryStdout === true,maxBuffer:options.maxBuffer});
   }
   if (context.targetInfo.kind === 'assembly') {
     const dotnetArgs=[...(options.passthrough ?? []),context.targetInfo.path,...args];
-    return spawnDotnet(context.dotnet,dotnetArgs,{cwd:options.cwd ?? context.targetInfo.directory,signal:options.signal,env:options.env});
+    return spawnDotnet(context.dotnet,dotnetArgs,{cwd:options.cwd ?? context.targetInfo.directory,signal:options.signal,env:options.env,binaryStdout:options.binaryStdout === true,maxBuffer:options.maxBuffer});
   }
   if (context.targetInfo.kind === 'project') {
     if (!context.targetInfo.runnable) throw new NodeNetError(`Project output type is not runnable: ${context.targetInfo.path}`,{code:'TARGET_NOT_RUNNABLE'});
@@ -102,7 +102,7 @@ export function runTarget(context, options = {}) {
     if (options.runtime) dotnetArgs.push('-r',options.runtime);
     appendPassthrough(dotnetArgs, options);
     if (args.length) dotnetArgs.push('--',...args);
-    return spawnDotnet(context.dotnet,dotnetArgs,{cwd:options.cwd ?? context.targetInfo.directory,signal:options.signal,env:options.env});
+    return spawnDotnet(context.dotnet,dotnetArgs,{cwd:options.cwd ?? context.targetInfo.directory,signal:options.signal,env:options.env,binaryStdout:options.binaryStdout === true,maxBuffer:options.maxBuffer});
   }
   throw new NodeNetError('A solution cannot be run directly. Attach to a runnable project.',{code:'TARGET_NOT_RUNNABLE'});
 }

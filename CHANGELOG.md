@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.2 — Developer Preview
+
+- Added a validated `display` service with lazy RGBA8 `Frame` and `FrameSurface` contracts.
+- Added a zero-dependency software rasterizer, normalized pointer/keyboard input, and deterministic PNG export.
+- Added `NodeNET.display()`, replaceable display providers, TypeScript declarations, and display capability reporting.
+- Added binary process-frame transport and the framework-neutral `NodeNET.Display` C# helper.
+- Added deterministic software, managed-.NET, and real Avalonia calculator acceptance paths for `12 + 7 = 19`.
+- Added screenshot artifacts to software and Avalonia CI validation.
+- Repaired truncated CLI source files that prevented the existing `0.3.1` unit/static gate from completing.
+
 ## 0.3.1 — Developer Preview
 
 - Added first-class `nodenet --help`, `nodenet --version`, and command help.

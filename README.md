@@ -4,7 +4,7 @@
 
 NodeNET is an ESM-native Node.js facade over the official .NET toolchain and runtime. It can inspect .NET targets, resolve or privately provision a compatible SDK/runtime, restore/build/test/publish/run projects, pass arbitrary `dotnet` commands through a `nodenet` CLI, and interoperate with compiled .NET libraries without requiring a machine-wide .NET setup.
 
-> Developer Preview — `0.3.1`
+> Developer Preview — `0.3.2`
 
 ## Install
 
@@ -80,6 +80,7 @@ net.clean()
 net.run()
 net.exec()
 net.library()
+net.display()
 net.capabilities()
 net.doctor()
 net.environment()
@@ -143,8 +144,8 @@ NodeNET facade
      ↓
 service kernel
      ↓
-Environment  Execution  Project  Interop  Capabilities
-     ↓          ↓          ↓        ↓
+Environment  Execution  Project  Interop  Display  Capabilities
+     ↓          ↓          ↓        ↓       ↓
  default providers / replaceable plugins
      ↓
 official .NET
@@ -204,7 +205,7 @@ console.log(await counter.get('Value')); // 11
 await counter.dispose();
 ```
 
-When CLR overloads are ambiguous, 0.3.1 can pass the deterministic bridge signature explicitly:
+When CLR overloads are ambiguous, NodeNET can pass the deterministic bridge signature explicitly:
 
 ```js
 await Counter.call({
@@ -217,6 +218,26 @@ await Counter.call({
 Interop uses a versioned binary-safe framed protocol. `Buffer`/`Uint8Array` arguments can travel as raw payload bytes, and `System.IO.Stream` results become pull-based remote stream handles.
 
 See [`docs/INTEROP.md`](docs/INTEROP.md).
+
+## Headless display
+
+DisplayService gives NodeNET a zero-dependency, lazy RGBA8 framebuffer plus capture and normalized input:
+
+```js
+import { NodeNET, savePng } from '@luminarylabs/nodenet';
+
+const app = await NodeNET.attach('.');
+const surface = await app.display({ width: 420, height: 640 });
+const draw = surface.rasterizer();
+draw.clear([8, 13, 31, 255]);
+surface.present();
+await savePng(surface.capture(), 'frame.png');
+await app.dispose();
+```
+
+Graphical child processes can submit raw frames over NodeNET's binary protocol and receive pointer/key input. The shipped C# helper and Avalonia acceptance fixture prove the same contract without making Avalonia or Skia core dependencies.
+
+See [`docs/DISPLAY.md`](docs/DISPLAY.md).
 
 ## Avalonia
 
@@ -231,7 +252,7 @@ nodenet build
 nodenet run
 ```
 
-The opt-in framework acceptance workflow creates an Avalonia app, drives state headlessly, and captures PNG render evidence when network-backed framework dependencies are available.
+The opt-in framework acceptance workflow creates a real Avalonia calculator, sends Node pointer input into its controls, verifies `12 + 7 = 19`, and captures the initial, expression, and result frames through DisplayService.
 
 ## Supported host identities
 
@@ -255,6 +276,7 @@ A private .NET archive does not provide every OS-native dependency required by e
 ```bash
 npm test
 npm run check
+npm run test:display
 npm pack --dry-run
 ```
 
@@ -280,6 +302,6 @@ For closeout and future handoff, use these repository documents rather than chat
 
 ## Ownership boundary
 
-NodeNET owns environment detection, .NET acquisition/selection, isolated child environments, CLI/API orchestration, process lifecycle, structured results, capabilities, service contracts, and JS↔.NET bridge semantics.
+NodeNET owns environment detection, .NET acquisition/selection, isolated child environments, CLI/API orchestration, process lifecycle, structured results, capabilities, display frames/input contracts, service contracts, and JS↔.NET bridge semantics.
 
 Microsoft/.NET remains authoritative for CoreCLR, JIT, GC, BCL, Roslyn, MSBuild, NuGet resolution, workloads, templates, C# semantics, and runtime behavior.

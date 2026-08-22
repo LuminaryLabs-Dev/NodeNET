@@ -19,7 +19,7 @@ test('--version is handled by NodeNET without attaching .NET', async () => {
   const output = capture();
   const code = await runCli(['--version'], { NodeNET: null, io: output.io });
   assert.equal(code, 0);
-  assert.match(output.stdout, /^NodeNET 0\.3\.1/m);
+  assert.match(output.stdout, /^NodeNET 0\.3\.2/m);
 });
 
 test('native command help is handled without attaching .NET', async () => {

@@ -1,5 +1,5 @@
 export class CapabilityService {
-  snapshot({ context = null, targetInfo = null, host = null, execution = null } = {}) {
+  snapshot({ context = null, targetInfo = null, host = null, execution = null, display = null } = {}) {
     const workloads = context?.workloads ?? { required: [], installed: [], missing: [] };
     const nativeAssets = context?.nativeAssets ?? { checked: false, assets: [] };
     const sdkVersions = context?.dotnet?.info?.sdks?.map(item => item.version) ?? [];
@@ -15,6 +15,7 @@ export class CapabilityService {
       workloads,
       native: nativeAssets,
       execution: { available: Boolean(execution), kind: execution?.kind ?? execution?.constructor?.name ?? null, provider: execution?.constructor?.name ?? null, sandboxed: execution?.sandboxed === true },
+      display: display?.capabilities?.() ?? { available: false },
       warnings: [...(context?.readinessWarnings ?? [])]
     };
   }

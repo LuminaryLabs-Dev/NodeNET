@@ -58,3 +58,4 @@ export async function runCli(argv, {
   } finally {
     await net.dispose();
   }
+}

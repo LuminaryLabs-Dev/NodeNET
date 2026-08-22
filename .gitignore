@@ -1,5 +1,10 @@
 node_modules/
 .nodenet/
 coverage/
+artifacts/
+**/bin/
+!/bin/
+!/bin/**
+**/obj/
 *.log
 .DS_Store

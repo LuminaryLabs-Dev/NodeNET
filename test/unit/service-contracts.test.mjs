@@ -20,4 +20,9 @@ test('known service contracts reject missing methods', () => {
     () => validateServiceContract('interop', {}),
     error => error.code === 'SERVICE_CONTRACT_FAILED'
   );
+  assert.throws(
+    () => validateServiceContract('display', { capabilities() {} }),
+    error => error.code === 'SERVICE_CONTRACT_FAILED' && error.details.missing.includes('createSurface')
+  );
+  assert.equal(validateServiceContract('display', { capabilities() {}, createSurface() {} }), true);
 });

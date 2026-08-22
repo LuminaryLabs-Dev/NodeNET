@@ -23,7 +23,7 @@ Documentation and release notes should distinguish these two levels instead of t
 
 ## Why services improve portability
 
-The public API asks for outcomes (`prepare`, `build`, `run`). Environment and execution details sit behind stable service contracts. A future container/remote provider can therefore change *where* a build runs without changing the application-facing NodeNET API.
+The public API asks for outcomes (`prepare`, `build`, `run`, `display`). Environment, execution, and graphical details sit behind stable service contracts. A future container/remote/display provider can therefore change *where* work runs or renders without changing the application-facing NodeNET API.
 
 The default remains deliberately small: local execution plus system/managed .NET resolution. Optional providers should only be added when a concrete deployment needs them.
 
@@ -59,4 +59,4 @@ NodeNET includes `.tar.gz` and `.zip` extraction so normal provisioning does not
 
 A private .NET archive does not supply every OS-native dependency a framework may require. NodeNET reports host/GUI capability and workload/native-asset evidence but does not run `apt`, `brew`, `dnf`, `choco`, or similar package managers.
 
-For GUI frameworks, “can build”, “can execute CoreCLR”, and “has a desktop display” remain separate capabilities.
+For GUI frameworks, “can build”, “can execute CoreCLR”, “can render headlessly”, and “has a desktop display” remain separate capabilities. The zero-dependency software display is always headless; a framework adapter is responsible for proving that framework's real pixels and input path.

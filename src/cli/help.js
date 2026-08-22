@@ -72,3 +72,4 @@ export function formatHelp(command, version = '') {
     '',
     'Unknown dotnet options are preserved and forwarded by build/test/publish/restore/clean/run.'
   ].join('\n');
+}

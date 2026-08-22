@@ -3,6 +3,7 @@ import { nodeHostPlugin } from '../plugins/host-node.js';
 import { localExecutionPlugin } from '../plugins/execution-local.js';
 import { dotnetEnvironmentPlugin } from '../plugins/environment-dotnet.js';
 import { capabilityPlugin } from '../plugins/capabilities.js';
+import { softwareDisplayPlugin } from '../plugins/display-software.js';
 import { dotnetProjectPlugin } from '../plugins/project-dotnet.js';
 import { reflectionInteropPlugin } from '../plugins/interop-reflection.js';
 import { SERVICE } from '../services/names.js';
@@ -14,6 +15,7 @@ export async function createDefaultKernel({ plugins = [], baseEnv = process.env 
     nodeHostPlugin(),
     localExecutionPlugin({ baseEnv }),
     dotnetEnvironmentPlugin(),
+    softwareDisplayPlugin(),
     capabilityPlugin(),
     dotnetProjectPlugin(),
     reflectionInteropPlugin()
@@ -49,6 +51,7 @@ export function serviceSnapshot(kernel) {
     execution: kernel.require(SERVICE.EXECUTION),
     project: kernel.require(SERVICE.PROJECT),
     interop: kernel.require(SERVICE.INTEROP),
+    display: kernel.require(SERVICE.DISPLAY),
     capabilities: kernel.require(SERVICE.CAPABILITIES)
   });
 }

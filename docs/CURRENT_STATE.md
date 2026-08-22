@@ -1,6 +1,6 @@
 # Current State
 
-## NodeNET 0.3.1
+## NodeNET 0.3.2
 
 **Status:** Developer Preview  
 **Canonical branch:** `main`
@@ -18,7 +18,7 @@ JavaScript API        nodenet CLI
              |
        service kernel
              |
- Host / Environment / Execution / Project / Interop / Capabilities
+ Host / Environment / Execution / Project / Interop / Display / Capabilities
              |
        default providers
              |
@@ -41,6 +41,7 @@ net.clean()
 net.run()
 net.exec()
 net.library()
+net.display()
 net.capabilities()
 net.doctor()
 net.environment()
@@ -89,6 +90,7 @@ Current service capabilities:
 - Execution: `exec()`, `spawn()`, `kind`, `sandboxed`
 - Project: `inspect()`, `prepare()`, `restore()`, `build()`, `test()`, `publish()`, `clean()`, `run()`
 - Interop: `openLibrary()`
+- Display: `capabilities()`, `createSurface()`
 - Capabilities: `snapshot()`
 
 Default execution is local, shell-free, and explicitly **not sandboxed**.
@@ -137,6 +139,26 @@ Current interoperability includes:
 
 Not part of 0.3.x: delegates/callbacks, CLR event subscriptions, generic invocation, `ref`/`out`, AbortSignal-to-CancellationToken mapping, or parallel bridge semantics.
 
+## DisplayService
+
+NodeNET now owns a framework-neutral display boundary:
+
+```text
+DisplayService
+  -> FrameSurface
+  -> raw RGBA8 Frame
+  -> capture / present / resize
+  -> pointer / keyboard input
+```
+
+The default `software-framebuffer` provider is headless, zero-dependency, and lazy. It includes a deliberately small deterministic rasterizer and PNG exporter for universal acceptance testing. A surface allocates no frame until the caller submits one or requests the rasterizer.
+
+`DisplayValidationHarness` composes surface input/capture operations above the core contract and writes PNG/hash/JSON acceptance evidence.
+
+The versioned binary process adapter and `bridge/NodeNET.Display` C# helper allow a real .NET process to submit RGBA8 frames and receive normalized input. Framework adapters remain optional. Avalonia owns its visual tree, layout, Skia rendering, and control input; its acceptance fixture normalizes the result into NodeNET frames.
+
+V1 rejects unsupported formats, padded/invalid strides, malformed payload sizes, and frames above the configured allocation limit.
+
 ## Host identities
 
 Implemented:
@@ -154,7 +176,7 @@ Implemented does not mean continuously tested. Standard hosted CI covers Windows
 
 ## Framework boundary
 
-Avalonia is a validation workload and future optional kit, not a dependency of NodeNET core. The same rule applies to ASP.NET, Roslyn, Unity-specific tooling, mobile workloads, and other framework integrations.
+Avalonia is the first real DisplayService acceptance adapter and remains a validation workload/future optional kit, not a dependency of NodeNET core. The same rule applies to ASP.NET, Roslyn, Unity-specific tooling, mobile workloads, and other framework integrations.
 
 ## Known limitations
 
@@ -166,6 +188,7 @@ Avalonia is a validation workload and future optional kit, not a dependency of N
 - 0.3.x does not yet provide bidirectional CLR callbacks/events.
 - ARM/musl host identities are implemented but are not all continuously tested.
 - Network-backed .NET/NuGet/framework validation depends on CI or another network-capable environment.
+- DisplayService V1 does not include WPF/WinForms adapters, GPU APIs, font shaping, shared memory, or remote display.
 
 ## Validation
 

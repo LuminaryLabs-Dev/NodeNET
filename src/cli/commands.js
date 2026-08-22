@@ -63,3 +63,4 @@ export async function runNativeCommand(net, parsed, io) {
     }
     default: throw new Error(`Unsupported NodeNET command: ${parsed.command}`);
   }
+}

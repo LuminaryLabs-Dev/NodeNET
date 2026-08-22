@@ -7,6 +7,7 @@ const REQUIRED_METHODS = Object.freeze({
   [SERVICE.ENVIRONMENT]: ['ensure'],
   [SERVICE.PROJECT]: ['inspect', 'prepare', 'restore', 'build', 'test', 'publish', 'clean', 'run'],
   [SERVICE.INTEROP]: ['openLibrary'],
+  [SERVICE.DISPLAY]: ['capabilities', 'createSurface'],
   [SERVICE.CAPABILITIES]: ['snapshot']
 });
 
