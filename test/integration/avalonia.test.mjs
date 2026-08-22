@@ -104,7 +104,10 @@ public partial class MainWindow : Window
     }
 }
 `);
-    await fs.writeFile(path.join(appDir, 'Program.cs'), `using System.Runtime.InteropServices;
+    await fs.writeFile(path.join(appDir, 'Program.cs'), `using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
