@@ -3,22 +3,29 @@ import path from 'node:path';
 import { runDotnet } from './dotnet/cli.js';
 import { NodeNetError, ProcessExitError } from './errors.js';
 import { createDefaultKernel, serviceSnapshot } from './kernel/context.js';
+import { packageVersion } from './version.js';
 
-const PACKAGE_JSON = new URL('../package.json', import.meta.url);
-let versionPromise;
-function packageVersion() {
-  versionPromise ??= fs.readFile(PACKAGE_JSON, 'utf8').then(text => JSON.parse(text).version);
-  return versionPromise;
+function normalizeTrust(options) {
+  const trust = options.trust ?? 'trusted';
+  if (!['trusted', 'untrusted'].includes(trust)) throw new TypeError(`Unsupported NodeNET trust mode: ${trust}`);
+  return trust;
 }
 
 export class NodeNET {
   static async attach(target = '.', options = {}) {
     const resolved = path.resolve(target);
+    const trust = normalizeTrust(options);
     const kernel = await createDefaultKernel({ plugins: options.plugins ?? [], baseEnv: options.env ?? process.env });
     try {
       const services = serviceSnapshot(kernel);
+      if (trust === 'untrusted' && services.execution.sandboxed !== true) {
+        throw new NodeNetError('Untrusted execution requires a sandboxed NodeNET execution provider.', {
+          code: 'UNTRUSTED_EXECUTION_REQUIRES_SANDBOX',
+          details: { execution: services.execution.kind ?? services.execution.constructor?.name ?? null }
+        });
+      }
       await services.project.inspect(resolved);
-      return new NodeNET(resolved, options, kernel, services);
+      return new NodeNET(resolved, { ...options, trust }, kernel, services);
     } catch (error) {
       await kernel.dispose().catch(() => {});
       throw error;
@@ -27,7 +34,7 @@ export class NodeNET {
 
   constructor(target, options = {}, kernel, services) {
     this.target = target;
-    this.options = { mode: 'shared', isolation: 'auto', defaultSdk: '10.0', ...options };
+    this.options = { mode: 'shared', isolation: 'auto', defaultSdk: '10.0', trust: 'trusted', ...options };
     delete this.options.plugins;
     this.kernel = kernel;
     this.services = services;
@@ -64,22 +71,19 @@ export class NodeNET {
   async #ensurePrepared(options = {}) { return this.prepare(options); }
 
   async restore(options = {}) {
-    if (!this.context) {
-      const context = await this.#ensurePrepared();
-      return context.restoreResult ?? this.services.project.restore(context, options);
-    }
+    if (!this.context) this.context = await this.#ensurePrepared({ restore: false });
     const result = await this.services.project.restore(this.context, options);
     this.context.restoreResult = result;
     return result;
   }
 
-  async build(options = {}) { return this.services.project.build(await this.#ensurePrepared(), options); }
-  async test(options = {}) { return this.services.project.test(await this.#ensurePrepared(), options); }
-  async publish(options = {}) { return this.services.project.publish(await this.#ensurePrepared(), options); }
+  async build(options = {}) { return this.services.project.build(await this.#ensurePrepared({ restore: options.noRestore ? false : undefined }), options); }
+  async test(options = {}) { return this.services.project.test(await this.#ensurePrepared({ restore: options.noRestore ? false : undefined }), options); }
+  async publish(options = {}) { return this.services.project.publish(await this.#ensurePrepared({ restore: options.noRestore ? false : undefined }), options); }
   async clean(options = {}) { return this.services.project.clean(await this.#ensurePrepared({ restore: false }), options); }
 
   async run(options = {}) {
-    const context = await this.#ensurePrepared();
+    const context = await this.#ensurePrepared({ restore: options.noRestore ? false : undefined });
     const handle = this.services.project.run(context, options);
     this.processes.add(handle);
     handle.once('exit', () => this.processes.delete(handle));

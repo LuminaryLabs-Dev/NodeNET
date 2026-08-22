@@ -1,0 +1,30 @@
+# NodeNET errors
+
+NodeNET errors include a stable `code` and may include structured `details`.
+
+Common codes:
+
+- `UNSUPPORTED_HOST`
+- `TARGET_NOT_FOUND`
+- `DOTNET_RESOLUTION_FAILED`
+- `DOTNET_PROVISION_FAILED`
+- `DOTNET_INTEGRITY_FAILED`
+- `DOTNET_VERIFICATION_FAILED`
+- `RESTORE_FAILED`
+- `BUILD_FAILED`
+- `TEST_FAILED`
+- `PUBLISH_FAILED`
+- `PROCESS_START_FAILED`
+- `PROCESS_EXIT_FAILED`
+- `PROCESS_TIMEOUT`
+- `GUI_UNAVAILABLE`
+- `LIBRARY_LOAD_FAILED`
+- `INVOCATION_FAILED`
+- `PROTOCOL_ERROR`
+- `CAPABILITY_CONFLICT`
+- `MISSING_CAPABILITY`
+- `PLUGIN_DEPENDENCY_FAILED`
+- `SERVICE_CONTRACT_FAILED`
+- `UNTRUSTED_EXECUTION_REQUIRES_SANDBOX`
+
+Use `nodenet doctor` to inspect the selected host/environment when a resolution or capability error occurs. Set `NODENET_DEBUG=1` for stack traces in the CLI.

@@ -2,30 +2,41 @@
 
 `nodenet` is designed to feel like `dotnet` in a Node environment.
 
+## Meta commands
+
+```text
+nodenet --help
+nodenet --version
+nodenet build --help
+nodenet doctor --help
+```
+
+NodeNET-owned help is handled without preparing a .NET environment. A non-NodeNET command such as `nodenet workload --help` is passed through to the real `dotnet` CLI.
+
 ## NodeNET-native commands
 
 ```text
-nodenet info
-nodenet prepare
-nodenet restore
-nodenet build
-nodenet test
-nodenet publish
-nodenet clean
-nodenet run
-nodenet doctor
-nodenet env
-nodenet capabilities
-nodenet cache
+info
+prepare
+restore
+build
+test
+publish
+clean
+run
+doctor
+env
+capabilities
+cache
 ```
 
-Native commands call the same NodeNET API used by JavaScript. They are not a parallel implementation.
+Native commands call the same NodeNET API used by JavaScript.
 
-The current directory is the default target. Use `--target <path>` (or `--project <path>`) to select another project. Common build flags include `-c/--configuration`, `-f/--framework`, `-r/--runtime`, `-o/--output`, and `--no-restore`. Use `--json` for machine-readable output.
+The current directory is the default target. Use `--target <path>` or `--project <path>` to select another project/workspace.
 
 ## Transparent dotnet passthrough
 
-Any command not owned by NodeNET is passed to the selected private/system `dotnet` unchanged after NodeNET prepares an SDK workspace.
+Any command not owned by NodeNET is passed unchanged after NodeNET establishes an SDK workspace:
 
 ```text
 nodenet new console -o Hello
@@ -33,19 +44,28 @@ nodenet new install Avalonia.Templates
 nodenet workload list
 nodenet tool list
 nodenet nuget list source
-nodenet add package Example.Package
 ```
 
-This is intentionally future-proof: new Microsoft CLI commands do not need to be reimplemented by NodeNET.
-
-## Empty-directory bootstrap
-
-An empty directory is a valid NodeNET workspace, so a Node-only machine can start with:
+For NodeNET-owned build/test/publish/restore/clean/run commands, NodeNET parses its own options and forwards unknown dotnet options rather than dropping them:
 
 ```text
-npx nodenet new console -o Hello
-cd Hello
-npx nodenet run
+nodenet build --verbosity diagnostic
 ```
 
-If no compatible .NET SDK exists, NodeNET provisions one privately.
+`run` reserves arguments after `--` for the application.
+
+## Provisioning progress
+
+Human CLI sessions print private-SDK resolution/download/verification/extraction progress to stderr. `--json` suppresses human progress so final stdout remains valid JSON.
+
+## Cache
+
+```text
+nodenet cache info
+nodenet cache list
+nodenet cache prune
+nodenet cache clear
+nodenet cache clear downloads
+```
+
+`prune` only removes stale download fragments, staging directories, and stale install locks. `clear` is explicit and may target one managed category.

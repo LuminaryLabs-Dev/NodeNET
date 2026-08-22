@@ -1,5 +1,18 @@
 import { marshalArguments } from './marshal.js';
 
+function callSpec(memberOrSpec, args) {
+  if (memberOrSpec && typeof memberOrSpec === 'object') {
+    const member = memberOrSpec.member;
+    if (!member) throw new TypeError('call() object form requires member.');
+    return {
+      member,
+      signature: memberOrSpec.signature,
+      arguments: memberOrSpec.arguments ?? args
+    };
+  }
+  return { member: memberOrSpec, signature: undefined, arguments: args };
+}
+
 export class RemoteStreamHandle {
   constructor(library, descriptor) {
     this.library = library;
@@ -34,11 +47,13 @@ export class RemoteObjectHandle {
     this.disposed = false;
   }
 
-  async call(member, ...args) {
-    const marshalled = marshalArguments(args);
+  async call(memberOrSpec, ...args) {
+    const spec = callSpec(memberOrSpec, args);
+    const marshalled = marshalArguments(spec.arguments);
     const response = await this.library.protocol.request('call', {
       handle: this.$handle,
-      member,
+      member: spec.member,
+      ...(spec.signature ? { signature: spec.signature } : {}),
       arguments: marshalled.arguments
     }, { payload: marshalled.payload });
     return this.library.fromWire(response.result, response.payload);
@@ -79,22 +94,29 @@ export class RemoteType {
 
   describe() { return this.library.describe(this.name); }
 
-  async new(...args) {
+  async construct({ signature, arguments: args = [] } = {}) {
     const marshalled = marshalArguments(args);
     const response = await this.library.protocol.request('construct', {
       assembly: this.library.assembly,
       type: this.name,
+      ...(signature ? { signature } : {}),
       arguments: marshalled.arguments
     }, { payload: marshalled.payload });
     return this.library.fromWire(response.result, response.payload);
   }
 
-  async call(member, ...args) {
-    const marshalled = marshalArguments(args);
+  async new(...args) {
+    return this.construct({ arguments: args });
+  }
+
+  async call(memberOrSpec, ...args) {
+    const spec = callSpec(memberOrSpec, args);
+    const marshalled = marshalArguments(spec.arguments);
     const response = await this.library.protocol.request('call', {
       assembly: this.library.assembly,
       type: this.name,
-      member,
+      member: spec.member,
+      ...(spec.signature ? { signature: spec.signature } : {}),
       arguments: marshalled.arguments
     }, { payload: marshalled.payload });
     return this.library.fromWire(response.result, response.payload);

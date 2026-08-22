@@ -4,6 +4,17 @@ import { provisionDotnet } from '../dotnet/provision.js';
 import { verifyDotnet } from '../dotnet/verify.js';
 import { DotnetResolutionError } from '../errors.js';
 
+function reportProgress(onProgress, event) {
+  if (typeof onProgress !== 'function') return;
+  try { onProgress(event); } catch {}
+}
+
+function selectedVersion(dotnet) {
+  return dotnet?.info?.sdks?.at(-1)?.version
+    ?? dotnet?.info?.runtimes?.at(-1)?.version
+    ?? null;
+}
+
 export class DotNetEnvironmentService {
   constructor({ execution } = {}) {
     this.execution = execution ?? null;
@@ -11,6 +22,8 @@ export class DotNetEnvironmentService {
 
   async ensure({ requirement, host, paths, options = {} } = {}) {
     if (!requirement || requirement.kind === 'none') return { dotnet: null, provisioned: false };
+
+    reportProgress(options.onProgress, { phase: 'resolve', requirement, rid: host.rid });
 
     const isolation = options.isolation ?? 'auto';
     let dotnet = await resolveDotnetHost({
@@ -40,6 +53,8 @@ export class DotNetEnvironmentService {
         onProgress: options.onProgress
       });
       provisioned = !dotnet.reused;
+    } else {
+      reportProgress(options.onProgress, { phase: 'reuse', source: dotnet.source, version: selectedVersion(dotnet) });
     }
 
     dotnet.info = dotnet.info ?? await verifyDotnet({
@@ -49,6 +64,13 @@ export class DotNetEnvironmentService {
     });
     dotnet.root ??= path.dirname(dotnet.path);
     dotnet.executor = this.execution;
+
+    reportProgress(options.onProgress, {
+      phase: 'ready',
+      source: dotnet.source,
+      version: selectedVersion(dotnet)
+    });
+
     return { dotnet, provisioned };
   }
 }

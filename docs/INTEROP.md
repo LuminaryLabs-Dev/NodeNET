@@ -5,10 +5,20 @@ NodeNET's default CLR bridge is process-isolated and reflection-based.
 ## Compatibility API
 
 ```js
-const lib = await net.library('./Library.dll');
 const response = await lib.invoke({
   type: 'Example.Calculator',
   method: 'Add',
+  arguments: [5, 8]
+});
+```
+
+An explicit deterministic CLR signature may be supplied:
+
+```js
+await lib.invoke({
+  type: 'Example.Calculator',
+  member: 'Add',
+  signature: 'Add(System.Int32,System.Int32)',
   arguments: [5, 8]
 });
 ```
@@ -24,12 +34,22 @@ await counter.set('Value', 20);
 await counter.dispose();
 ```
 
-Constructed CLR objects remain inside the bridge and are represented in JavaScript by opaque handles. This avoids pretending that arbitrary CLR objects are plain JavaScript objects and gives resource lifetime an explicit boundary.
+Object and static calls also accept descriptor form when overload selection must be explicit:
+
+```js
+await counter.call({
+  member: 'Set',
+  signature: 'Set(System.Int32)',
+  arguments: [20]
+});
+```
+
+Constructors can be selected explicitly with `RemoteType.construct({ signature, arguments })`.
 
 ## Binary and streams
 
-`Buffer`/`Uint8Array` arguments use the raw protocol payload instead of base64 JSON when a target parameter is `byte[]`, `Memory<byte>`, or `ReadOnlyMemory<byte>`. `System.IO.Stream` results become remote stream handles with chunked `read()` and `write()` operations.
+`Buffer`/`Uint8Array` arguments use the raw protocol payload for `byte[]`, `Memory<byte>`, or `ReadOnlyMemory<byte>`. `System.IO.Stream` results become pull-based remote stream handles, which naturally apply backpressure because Node requests each chunk.
 
-## Current scope
+## Scope
 
-The 0.3 bridge establishes the object, descriptor, binary, and stream foundations. Event subscriptions, delegate callbacks, cancellation-token bridging, and richer generic/ref/out semantics remain future protocol operations; they do not require changing the transport or object-handle model.
+The object/descriptor/binary/stream foundation is stable enough for Developer Preview use. Delegate callbacks, CLR event subscriptions, CancellationToken/AbortSignal bridging, richer generic/ref/out semantics, and explicit protocol feature negotiation remain later interop work; they should extend the current model rather than replace it.

@@ -1,9 +1,10 @@
 {
   "name": "@luminarylabs/nodenet",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Bring the .NET toolchain and runtime into Node.js with a portable Node-native API and CLI.",
   "type": "module",
   "main": "./src/index.js",
+  "types": "./types/index.d.ts",
   "exports": {
     ".": "./src/index.js"
   },
@@ -15,8 +16,11 @@
     "bridge",
     "bin",
     "docs",
+    "types",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "node scripts/run-tests.mjs unit",
@@ -27,6 +31,15 @@
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LuminaryLabs-Dev/NodeNET.git"
+  },
+  "homepage": "https://github.com/LuminaryLabs-Dev/NodeNET#readme",
+  "bugs": {
+    "url": "https://github.com/LuminaryLabs-Dev/NodeNET/issues"
+  },
+  "author": "Luminary Labs",
   "keywords": [
     "dotnet",
     "csharp",

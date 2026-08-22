@@ -1,26 +1,25 @@
-# Security
+# NodeNET security model
 
-NodeNET can download executables, compile source, load assemblies, and start native-capable .NET processes. **NodeNET is not a sandbox.**
+NodeNET can download official executables, compile source, restore packages, load assemblies, and start native-capable processes. It is not a sandbox.
 
-## Trust boundaries
+## Default local execution
 
-- Official .NET archives are selected from Microsoft release metadata and verified with the published SHA-512 value before extraction.
-- Archive extraction rejects absolute paths and `..` traversal.
-- Normal process execution is shell-free.
-- Machine/user PATH and registry state are not modified.
-- OS package managers are not invoked automatically.
-- The CLR interoperability bridge runs out-of-process.
+`LocalExecutionService` launches shell-free child processes with the privileges of the Node process. Shell-free spawning reduces quoting/shell-injection risk but does not isolate code.
 
-## Execution service
+Treat prepare/build/test/run/library invocation against untrusted source or assemblies as arbitrary code execution.
 
-NodeNET 0.3 introduces an explicit execution-service boundary. The default local executor has the privileges of the Node process and reports `sandboxed: false`. This boundary is intended to permit separately implemented container or remote executors; merely selecting NodeNET does not make untrusted code safe.
+## Explicit trust gate
 
-## Untrusted projects
+`NodeNET.attach(target, { trust: 'trusted' })` is the default.
 
-Treat `prepare()`, `restore()`, `build()`, `test()`, `run()`, arbitrary `exec()` commands, and library invocation against untrusted source/binaries as code execution. MSBuild targets, test assemblies, application code, native dependencies, and library initializers may perform arbitrary host actions.
+`trust: 'untrusted'` requires the selected execution service to declare `sandboxed: true`. The default local executor therefore cannot be used for explicitly untrusted workloads. This prevents an API caller from accidentally treating process isolation as a security sandbox.
 
-Use a real OS/container isolation boundary when the target is untrusted.
+A provider declaring `sandboxed: true` is responsible for implementing and documenting the actual OS/container/remote isolation boundary.
 
-## Bridge handles
+## Provisioning integrity
 
-The bridge is intended for trusted assemblies. Reflection operations can construct objects and invoke public members. Handles are scoped to the bridge process and are explicitly disposed or released when the bridge exits.
+Official .NET artifacts are selected from Microsoft release metadata and verified with the published SHA-512 hash before installation. Local offline artifacts also require an expected hash.
+
+## Bridge boundary
+
+The CLR bridge is out-of-process, but it is intended for trusted assemblies unless the entire execution provider is externally sandboxed. Reflection restrictions are not an application security policy.

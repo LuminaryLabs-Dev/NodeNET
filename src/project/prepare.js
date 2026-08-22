@@ -95,7 +95,12 @@ export async function prepareTarget(target, options = {}) {
   const readinessWarnings = [];
   if (workloads.missing.length) readinessWarnings.push(`Missing .NET workloads: ${workloads.missing.join(', ')}`);
   if (targetInfo.legacyFrameworks?.length) readinessWarnings.push(`Legacy .NET Framework target(s) detected (${targetInfo.legacyFrameworks.join(', ')}); targeting-pack availability is host-specific and is not provisioned as a modern .NET runtime channel.`);
-  const execution = services?.execution ? { kind: services.execution.kind ?? services.execution.constructor?.name ?? null, provider: services.execution.constructor?.name ?? null, sandboxed: services.execution.sandboxed === true } : null;
+  const execution = services?.execution ? {
+    kind: services.execution.kind ?? services.execution.constructor?.name ?? null,
+    provider: services.execution.constructor?.name ?? null,
+    sandboxed: services.execution.sandboxed === true,
+    trust: options.trust ?? 'trusted'
+  } : null;
 
   const state = {
     version: 2,

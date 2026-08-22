@@ -25,7 +25,7 @@ function exec(command, args, { cwd, env = process.env } = {}) {
   });
 }
 
-test('managed NodeNET provisions, builds/runs C#, preserves legacy invoke, supports objects/binary/streams, and powers the packed CLI', { skip: !enabled, timeout: 20 * 60_000 }, async () => {
+test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers the packed CLI', { skip: !enabled, timeout: 20 * 60_000 }, async () => {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'nodenet-integration-'));
   const home = path.join(work, 'home');
   const consoleDir = path.join(work, 'console');
@@ -63,17 +63,22 @@ test('managed NodeNET provisions, builds/runs C#, preserves legacy invoke, suppo
     const libraryAssembly = path.join(libraryDir, 'bin', 'Release', `net${major}.0`, 'Library.dll');
     const library = await net.library(libraryAssembly);
     try {
-      const legacy = await library.invoke({ type: 'NodeNET.TestLibrary.Calculator', method: 'Add', arguments: [5, 8] });
+      const legacy = await library.invoke({
+        type: 'NodeNET.TestLibrary.Calculator',
+        method: 'Add',
+        signature: 'Add(System.Int32,System.Int32)',
+        arguments: [5, 8]
+      });
       assert.equal(legacy.result, 13);
 
       const counterType = library.type('NodeNET.TestLibrary.Counter');
       const descriptor = await counterType.describe();
-      assert.ok(descriptor.constructors.length >= 1);
-      assert.ok(descriptor.methods.some(member => member.name === 'Increment'));
+      assert.ok(descriptor.constructors.some(member => member.signature === '.ctor(System.Int32)'));
+      assert.ok(descriptor.methods.some(member => member.signature === 'Increment()'));
       assert.ok(descriptor.properties.some(member => member.name === 'Value'));
 
-      const counter = await counterType.new(10);
-      await counter.call('Increment');
+      const counter = await counterType.construct({ signature: '.ctor(System.Int32)', arguments: [10] });
+      await counter.call({ member: 'Increment', signature: 'Increment()', arguments: [] });
       assert.equal(await counter.get('Value'), 11);
       await counter.set('Value', 20);
       assert.equal(await counter.get('Value'), 20);
@@ -101,16 +106,36 @@ test('managed NodeNET provisions, builds/runs C#, preserves legacy invoke, suppo
     const tarballName = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
     const tarball = path.join(work, tarballName);
     assert.ok((await fs.stat(tarball)).isFile());
+
     const consumer = path.join(work, 'consumer');
     await fs.mkdir(consumer, { recursive: true });
     await fs.writeFile(path.join(consumer, 'package.json'), '{"private":true}\n');
     const install = await exec(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['install', tarball, '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: consumer });
     assert.equal(install.code, 0, install.stderr);
+
     const packedCli = path.join(consumer, 'node_modules', '@luminarylabs', 'nodenet', 'bin', 'nodenet.js');
     const cliEnv = { ...process.env, NODENET_HOME: home, NODENET_ISOLATION: 'managed', NODENET_SDK: sdk };
+
+    const version = await exec(process.execPath, [packedCli, '--version'], { cwd: consumer, env: cliEnv });
+    assert.equal(version.code, 0, version.stderr);
+    assert.match(version.stdout, /^NodeNET 0\.3\.1/m);
+
+    const help = await exec(process.execPath, [packedCli, 'build', '--help'], { cwd: consumer, env: cliEnv });
+    assert.equal(help.code, 0, help.stderr);
+    assert.match(help.stdout, /build: Build the attached project or solution/);
+
     const create = await exec(process.execPath, [packedCli, 'new', 'console', '-o', 'Hello'], { cwd: consumer, env: cliEnv });
     assert.equal(create.code, 0, create.stderr);
-    const run = await exec(process.execPath, [packedCli, 'run'], { cwd: path.join(consumer, 'Hello'), env: cliEnv });
+
+    const hello = path.join(consumer, 'Hello');
+    const build = await exec(process.execPath, [packedCli, 'build', '--verbosity', 'minimal'], { cwd: hello, env: cliEnv });
+    assert.equal(build.code, 0, build.stderr);
+
+    const cache = await exec(process.execPath, [packedCli, 'cache', 'info', '--json'], { cwd: hello, env: cliEnv });
+    assert.equal(cache.code, 0, cache.stderr);
+    assert.equal(JSON.parse(cache.stdout).baseDir, home);
+
+    const run = await exec(process.execPath, [packedCli, 'run'], { cwd: hello, env: cliEnv });
     assert.equal(run.code, 0, run.stderr);
     assert.match(run.stdout, /Hello, World!/i);
   } finally {

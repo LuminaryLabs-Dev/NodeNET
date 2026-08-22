@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-import { NodeNET } from '../src/index.js';
 import { runCli } from '../src/cli/cli.js';
+import { parseCli } from '../src/cli/parse.js';
 
 try {
-  process.exitCode = await runCli(process.argv.slice(2), { NodeNET });
+  const argv = process.argv.slice(2);
+  const parsed = parseCli(argv);
+  const needsFacade = !(parsed.kind === 'meta' || (parsed.kind === 'native' && parsed.help));
+  const NodeNET = needsFacade ? (await import('../src/index.js')).NodeNET : null;
+  process.exitCode = await runCli(argv, { NodeNET });
 } catch (error) {
   const code = error?.code ? ` (${error.code})` : '';
   console.error(`NodeNET${code}: ${error?.message ?? error}`);

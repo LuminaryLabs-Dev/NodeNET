@@ -1,0 +1,17 @@
+name: Feature request
+description: Propose a focused NodeNET capability
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Intended outcome
+      description: Describe what a NodeNET user or author should be able to accomplish.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Architecture boundary
+      description: Explain whether this belongs in core, a service contract, or a framework/provider plugin.

@@ -1,4 +1,5 @@
 import { NodeNetError } from '../errors.js';
+import { validateServiceContract } from '../services/contracts.js';
 
 export class ServiceRegistry {
   constructor() {
@@ -73,6 +74,8 @@ export class ServiceRegistry {
         details: { missing }
       });
     }
+
+    for (const [capability, service] of this.services) validateServiceContract(capability, service);
     return true;
   }
 

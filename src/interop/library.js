@@ -84,7 +84,7 @@ export class LibraryHandle {
     return value;
   }
 
-  async invoke({ type, method, member, arguments: args = [] } = {}) {
+  async invoke({ type, method, member, signature, arguments: args = [] } = {}) {
     if (!type) throw new TypeError('invoke() requires a fully qualified .NET type name.');
     const selectedMember = member ?? method;
     if (!selectedMember) throw new TypeError('invoke() requires method/member.');
@@ -93,6 +93,7 @@ export class LibraryHandle {
       assembly: this.assembly,
       type,
       member: selectedMember,
+      ...(signature ? { signature } : {}),
       arguments: marshalled.arguments
     }, { payload: marshalled.payload });
     return {

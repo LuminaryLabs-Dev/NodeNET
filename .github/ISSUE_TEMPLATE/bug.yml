@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible NodeNET defect
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: NodeNET version
+      placeholder: 0.3.1
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host
+      placeholder: Windows 11 x64 / macOS arm64 / Ubuntu x64
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the smallest command/code sample that reproduces the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: nodenet doctor output
+      description: Remove secrets before posting.

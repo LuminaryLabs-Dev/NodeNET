@@ -19,6 +19,11 @@ const METADATA_BASE = 'https://dotnetcli.blob.core.windows.net/dotnet/release-me
 const LOCK_STALE_MS = 15 * 60_000;
 const LOCK_WAIT_MS = 10 * 60_000;
 
+function reportProgress(onProgress, event) {
+  if (typeof onProgress !== 'function') return;
+  try { onProgress(event); } catch {}
+}
+
 function channelFromVersion(version = '10.0') {
   const parts = String(version).split('.');
   if (parts.length < 2) throw new DotnetResolutionError(`Invalid .NET version: ${version}`);
@@ -59,7 +64,6 @@ function runtimeComponent(frameworkName = 'Microsoft.NETCore.App') {
   }
   throw new DotnetResolutionError(`NodeNET cannot provision the custom shared framework ${frameworkName}.`);
 }
-
 
 export async function fetchReleaseMetadata(channel, { fetchImpl = globalThis.fetch, signal } = {}) {
   if (typeof fetchImpl !== 'function') throw new DotnetProvisionError('Global fetch is unavailable. Node 20+ is required.');
@@ -118,7 +122,6 @@ export async function resolveOfficialArtifact(requirement, rid, options = {}) {
   throw new DotnetResolutionError(`Unsupported .NET provision kind: ${requirement?.kind}`);
 }
 
-
 function assertProvisionedRequirement(info, requirement) {
   if (!satisfiesRequirement(info, requirement)) {
     throw new DotnetProvisionError('Provisioned .NET environment does not satisfy the requested SDK/runtime requirement.', {
@@ -134,8 +137,9 @@ export async function hashFile(filePath, algorithm = 'sha512') {
   return hash.digest('hex');
 }
 
-async function verifyArchiveHash(filePath, expectedHash) {
+async function verifyArchiveHash(filePath, expectedHash, { onProgress, artifact } = {}) {
   if (!expectedHash) throw new DotnetIntegrityError('Official .NET artifact metadata did not include a SHA-512 hash.');
+  reportProgress(onProgress, { phase: 'verify', artifact });
   const actual = await hashFile(filePath, 'sha512');
   if (actual.toLowerCase() !== String(expectedHash).toLowerCase()) {
     throw new DotnetIntegrityError(`Checksum mismatch for ${path.basename(filePath)}.`, {
@@ -149,7 +153,7 @@ async function downloadArtifact(artifact, destination, { fetchImpl = globalThis.
   const existing = await fsp.stat(destination).catch(() => null);
   if (existing?.isFile()) {
     try {
-      await verifyArchiveHash(destination, artifact.hash);
+      await verifyArchiveHash(destination, artifact.hash, { onProgress, artifact });
       return { path: destination, reused: true };
     } catch {
       await fsp.rm(destination, { force: true });
@@ -172,10 +176,10 @@ async function downloadArtifact(artifact, destination, { fetchImpl = globalThis.
     const body = Readable.fromWeb(response.body);
     body.on('data', chunk => {
       received += chunk.length;
-      onProgress?.({ phase: 'download', received, total, artifact });
+      reportProgress(onProgress, { phase: 'download', received, total, artifact });
     });
     await pipeline(body, fs.createWriteStream(temp, { flags: 'wx' }));
-    await verifyArchiveHash(temp, artifact.hash);
+    await verifyArchiveHash(temp, artifact.hash, { onProgress, artifact });
     await fsp.rename(temp, destination);
     return { path: destination, reused: false };
   } catch (cause) {
@@ -243,16 +247,19 @@ export async function provisionDotnet({ requirement, host, paths, env = process.
       localPath: resolved,
       extension
     };
-    await verifyArchiveHash(resolved, expectedHash);
+    reportProgress(onProgress, { phase: 'artifact', artifact, requirement });
+    await verifyArchiveHash(resolved, expectedHash, { onProgress, artifact });
   } else {
     if (offline) throw new DotnetProvisionError('Offline provisioning requires artifactPath when no compatible managed .NET environment exists.');
     artifact = await resolveOfficialArtifact(requirement, host.rid, { fetchImpl, signal });
+    reportProgress(onProgress, { phase: 'artifact', artifact, requirement });
   }
 
   const installRoot = path.join(paths.root, installationName(artifact));
   const executable = path.join(installRoot, dotnetExecutableName(host.platform));
   const existing = await fsp.stat(executable).catch(() => null);
   if (existing?.isFile()) {
+    reportProgress(onProgress, { phase: 'reuse', source: 'managed', version: artifact.version, artifact });
     const managedEnv = createDotnetEnvironment({ root: installRoot, paths, baseEnv: env });
     const info = assertProvisionedRequirement(await verifyDotnet({ path: executable, env: managedEnv }), requirement);
     return { path: executable, root: installRoot, source: 'managed', env: managedEnv, info, artifact, reused: true };
@@ -262,6 +269,7 @@ export async function provisionDotnet({ requirement, host, paths, env = process.
   return withLock(lockPath, async () => {
     const afterLock = await fsp.stat(executable).catch(() => null);
     if (afterLock?.isFile()) {
+      reportProgress(onProgress, { phase: 'reuse', source: 'managed', version: artifact.version, artifact });
       const managedEnv = createDotnetEnvironment({ root: installRoot, paths, baseEnv: env });
       const info = assertProvisionedRequirement(await verifyDotnet({ path: executable, env: managedEnv }), requirement);
       return { path: executable, root: installRoot, source: 'managed', env: managedEnv, info, artifact, reused: true };
@@ -276,11 +284,12 @@ export async function provisionDotnet({ requirement, host, paths, env = process.
     await fsp.mkdir(staging, { recursive: true });
 
     try {
-      onProgress?.({ phase: 'extract', artifact });
+      reportProgress(onProgress, { phase: 'extract', artifact });
       await extractArchive(archivePath, staging);
       const stagingExecutable = path.join(staging, dotnetExecutableName(host.platform));
       if (host.platform !== 'win32') await fsp.chmod(stagingExecutable, 0o755).catch(() => {});
       const stagingEnv = createDotnetEnvironment({ root: staging, paths, baseEnv: env });
+      reportProgress(onProgress, { phase: 'verify', artifact });
       assertProvisionedRequirement(await verifyDotnet({ path: stagingExecutable, env: stagingEnv }), requirement);
       await fsp.rename(staging, installRoot);
     } catch (cause) {

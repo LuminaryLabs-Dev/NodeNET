@@ -5,5 +5,6 @@ export { inspectTarget } from './project/inspect.js';
 export { definePlugin } from './kernel/plugin.js';
 export { ServiceRegistry } from './kernel/registry.js';
 export { LocalExecutionService } from './services/execution.js';
+export { serviceContract, validateServiceContract } from './services/contracts.js';
 export { SERVICE } from './services/names.js';
 export * from './interop/index.js';
