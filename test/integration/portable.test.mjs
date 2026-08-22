@@ -26,6 +26,21 @@ function exec(command, args, { cwd, env = process.env } = {}) {
   });
 }
 
+async function execNpm(args, options) {
+  const candidates = [
+    process.env.npm_execpath,
+    path.resolve(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    path.resolve(path.dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js')
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return exec(process.execPath, [candidate, ...args], options);
+    } catch {}
+  }
+  throw new Error('Unable to locate npm-cli.js for packed-consumer validation.');
+}
+
 function processEvidence(result) {
   return `exit=${result.exitCode}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`;
 }
@@ -154,7 +169,7 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
       assert.equal(processResult.ok, true, processResult.stderr);
     } finally { await displayNet.dispose(); }
 
-    const pack = await exec(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['pack', '--pack-destination', work], { cwd: root });
+    const pack = await execNpm(['pack', '--pack-destination', work], { cwd: root });
     assert.equal(pack.code, 0, pack.stderr);
     const tarballName = pack.stdout.trim().split(/\r?\n/).filter(Boolean).at(-1);
     const tarball = path.join(work, tarballName);
@@ -163,7 +178,7 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
     const consumer = path.join(work, 'consumer');
     await fs.mkdir(consumer, { recursive: true });
     await fs.writeFile(path.join(consumer, 'package.json'), '{"private":true}\n');
-    const install = await exec(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['install', tarball, '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: consumer });
+    const install = await execNpm(['install', tarball, '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: consumer });
     assert.equal(install.code, 0, install.stderr);
 
     const packedCli = path.join(consumer, 'node_modules', '@luminarylabs', 'nodenet', 'bin', 'nodenet.js');

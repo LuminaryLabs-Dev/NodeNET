@@ -147,6 +147,7 @@ export interface DisplaySurfaceOptions {
 }
 
 export class FrameSurface {
+  constructor(options: DisplaySurfaceOptions);
   readonly id: string;
   width: number;
   height: number;
@@ -176,6 +177,7 @@ export class FrameSurface {
 }
 
 export class SoftwareDisplayService {
+  constructor(options?: { maxFrameBytes?: number });
   readonly kind: 'software-framebuffer';
   readonly headless: true;
   readonly maxFrameBytes: number;

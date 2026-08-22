@@ -7,7 +7,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageJson = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
 const packageLock = JSON.parse(await fs.readFile(path.join(root, 'package-lock.json'), 'utf8'));
 if (packageJson.type !== 'module') throw new Error('package.json must keep "type": "module".');
-if (packageJson.exports?.['.'] !== './src/index.js') throw new Error('Package root export must remain ./src/index.js.');
+if (packageJson.exports?.['.']?.types !== './types/index.d.ts') throw new Error('Package root export must expose ./types/index.d.ts to modern TypeScript consumers.');
+if (packageJson.exports?.['.']?.import !== './src/index.js' || packageJson.exports?.['.']?.default !== './src/index.js') {
+  throw new Error('Package root runtime exports must remain ./src/index.js.');
+}
 if (packageJson.bin?.nodenet !== './bin/nodenet.js') throw new Error('The nodenet executable mapping must remain ./bin/nodenet.js.');
 if (packageJson.types !== './types/index.d.ts') throw new Error('Package TypeScript declarations must remain ./types/index.d.ts.');
 if (!packageJson.files?.includes('types')) throw new Error('Published package files must include TypeScript declarations.');
@@ -27,6 +30,10 @@ const required = [
   'docs/CURRENT_STATE.md','docs/DISPLAY.md','docs/VALIDATION.md','docs/ROADMAP.md'
 ];
 for (const relative of required) await fs.access(path.join(root, relative));
+const declarations = await fs.readFile(path.join(root, 'types', 'index.d.ts'), 'utf8');
+if (!declarations.includes('constructor(options: DisplaySurfaceOptions);')) {
+  throw new Error('FrameSurface declarations must expose the public constructor used by package consumers.');
+}
 
 async function collect(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });

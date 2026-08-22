@@ -65,10 +65,22 @@ test('NodeNET drives and captures a real Avalonia calculator through DisplayServ
     </Border>
     <TextBlock Grid.Row="2" Text="AVALONIA HEADLESS / RGBA8" Foreground="#7D92B5" FontSize="11" VerticalAlignment="Center"/>
     <Grid Grid.Row="3" RowDefinitions="*,*,*,*" ColumnDefinitions="*,*,*,*" RowSpacing="12" ColumnSpacing="12">
-      <Button x:Name="B7" Grid.Row="0" Grid.Column="0" Content="7" Click="OnButton"/><Button x:Name="B8" Grid.Row="0" Grid.Column="1" Content="8" Click="OnButton"/><Button x:Name="B9" Grid.Row="0" Grid.Column="2" Content="9" Click="OnButton"/><Button x:Name="BDivide" Grid.Row="0" Grid.Column="3" Content="/" Click="OnButton" Background="#50399E"/>
-      <Button x:Name="B4" Grid.Row="1" Grid.Column="0" Content="4" Click="OnButton"/><Button x:Name="B5" Grid.Row="1" Grid.Column="1" Content="5" Click="OnButton"/><Button x:Name="B6" Grid.Row="1" Grid.Column="2" Content="6" Click="OnButton"/><Button x:Name="BMinus" Grid.Row="1" Grid.Column="3" Content="-" Click="OnButton" Background="#50399E"/>
-      <Button x:Name="B1" Grid.Row="2" Grid.Column="0" Content="1" Click="OnButton"/><Button x:Name="B2" Grid.Row="2" Grid.Column="1" Content="2" Click="OnButton"/><Button x:Name="B3" Grid.Row="2" Grid.Column="2" Content="3" Click="OnButton"/><Button x:Name="BPlus" Grid.Row="2" Grid.Column="3" Content="+" Click="OnButton" Background="#50399E"/>
-      <Button x:Name="B0" Grid.Row="3" Grid.Column="0" Content="0" Click="OnButton"/><Button x:Name="BDot" Grid.Row="3" Grid.Column="1" Content="." Click="OnButton"/><Button x:Name="BClear" Grid.Row="3" Grid.Column="2" Content="C" Click="OnButton"/><Button x:Name="BEquals" Grid.Row="3" Grid.Column="3" Content="=" Click="OnButton" Background="#E26236"/>
+      <Button x:Name="B7" Grid.Row="0" Grid.Column="0" Content="7" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B8" Grid.Row="0" Grid.Column="1" Content="8" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B9" Grid.Row="0" Grid.Column="2" Content="9" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BDivide" Grid.Row="0" Grid.Column="3" Content="/" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B4" Grid.Row="1" Grid.Column="0" Content="4" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B5" Grid.Row="1" Grid.Column="1" Content="5" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B6" Grid.Row="1" Grid.Column="2" Content="6" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BMinus" Grid.Row="1" Grid.Column="3" Content="-" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B1" Grid.Row="2" Grid.Column="0" Content="1" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B2" Grid.Row="2" Grid.Column="1" Content="2" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B3" Grid.Row="2" Grid.Column="2" Content="3" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BPlus" Grid.Row="2" Grid.Column="3" Content="+" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="B0" Grid.Row="3" Grid.Column="0" Content="0" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BDot" Grid.Row="3" Grid.Column="1" Content="." Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BClear" Grid.Row="3" Grid.Column="2" Content="C" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
+      <Button x:Name="BEquals" Grid.Row="3" Grid.Column="3" Content="=" Click="OnButton" Background="#E26236" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold"/>
     </Grid>
   </Grid>
 </Window>
