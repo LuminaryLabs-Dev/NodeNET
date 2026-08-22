@@ -61,7 +61,9 @@ test('NodeNET drives and captures a real Avalonia calculator through DisplayServ
   </Grid>
 </Window>
 `);
-    await fs.writeFile(path.join(appDir, 'MainWindow.axaml.cs'), `using Avalonia.Controls;
+    await fs.writeFile(path.join(appDir, 'MainWindow.axaml.cs'), `using System;
+using System.Globalization;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 namespace App;
 public partial class MainWindow : Window
@@ -93,13 +95,13 @@ public partial class MainWindow : Window
         }
         else if (token is "+" or "-" or "/")
         {
-            _left = decimal.Parse(display.Text ?? "0"); _operator = token; expression.Text = $"{_left} {_operator}"; _replace = true;
+            _left = decimal.Parse(display.Text ?? "0", CultureInfo.InvariantCulture); _operator = token; expression.Text = $"{_left} {_operator}"; _replace = true;
         }
         else if (token == "=" && _left is not null && _operator is not null)
         {
-            var right = decimal.Parse(display.Text ?? "0");
+            var right = decimal.Parse(display.Text ?? "0", CultureInfo.InvariantCulture);
             var result = _operator == "+" ? _left.Value + right : _operator == "-" ? _left.Value - right : _left.Value / right;
-            display.Text = result.ToString("0.##########"); expression.Text = "READY"; _left = null; _operator = null; _replace = true;
+            display.Text = result.ToString("0.##########", CultureInfo.InvariantCulture); expression.Text = "READY"; _left = null; _operator = null; _replace = true;
         }
     }
 }
