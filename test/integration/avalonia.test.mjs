@@ -200,8 +200,11 @@ internal static class Program
     try {
       const prepared = await app.prepare();
       assert.equal(prepared.ready, true);
-      const build = await app.build();
-      assert.equal(build.ok, true);
+      const build = await app.exec(['build', project, '--nologo', '--no-restore'], {
+        cwd: appDir,
+        rejectOnNonZero: false
+      });
+      assert.equal(build.ok, true, `exit=${build.exitCode}\nstdout:\n${build.stdout}\nstderr:\n${build.stderr}`);
       const handle = await app.run({ binaryStdout: true });
       const surface = await app.display({ process: handle });
       const harness = new DisplayValidationHarness(surface, { outputDirectory: output, timeout: 30_000 });
@@ -236,9 +239,13 @@ internal static class Program
       await surface.dispose();
       const run = await handle.wait();
       assert.equal(run.ok, true, run.stderr);
-    } finally { await app.dispose(); }
+    } finally {
+      try { await app.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
+      await app.dispose();
+    }
   } finally {
+    try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
     await net.dispose();
-    await fs.rm(work, { recursive: true, force: true });
+    await fs.rm(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 });

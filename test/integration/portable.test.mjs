@@ -26,6 +26,10 @@ function exec(command, args, { cwd, env = process.env } = {}) {
   });
 }
 
+function processEvidence(result) {
+  return `exit=${result.exitCode}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`;
+}
+
 test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers the packed CLI', { skip: !enabled, timeout: 20 * 60_000 }, async () => {
   const work = await fs.mkdtemp(path.join(os.tmpdir(), 'nodenet-integration-'));
   const home = path.join(work, 'home');
@@ -104,7 +108,11 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
 
     const displayProject = path.join(fixtures, 'display-dotnet', 'DisplayFixture.csproj');
     await net.exec(['restore', displayProject, '--nologo'], { cwd: path.dirname(displayProject) });
-    await net.exec(['build', displayProject, '--nologo', '--no-restore'], { cwd: path.dirname(displayProject) });
+    const displayBuild = await net.exec(['build', displayProject, '--nologo', '--no-restore'], {
+      cwd: path.dirname(displayProject),
+      rejectOnNonZero: false
+    });
+    assert.equal(displayBuild.ok, true, processEvidence(displayBuild));
     const displayAssembly = path.join(path.dirname(displayProject), 'bin', 'Debug', 'net10.0', 'DisplayFixture.dll');
     const displayNet = await NodeNET.attach(displayAssembly, {
       mode: 'temporary',
@@ -172,7 +180,8 @@ test('managed NodeNET provisions, builds/runs C#, preserves interop, and powers 
     assert.equal(run.code, 0, run.stderr);
     assert.match(run.stdout, /Hello, World!/i);
   } finally {
+    try { await net.exec(['build-server', 'shutdown'], { rejectOnNonZero: false }); } catch {}
     await net.dispose();
-    await fs.rm(work, { recursive: true, force: true });
+    await fs.rm(work, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 });
