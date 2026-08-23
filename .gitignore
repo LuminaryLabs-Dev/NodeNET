@@ -1,10 +1,33 @@
+# Node and package output
 node_modules/
+*.tgz
+
+# NodeNET managed state
 .nodenet/
-coverage/
+
+# Validation and coverage output
 artifacts/
+coverage/
+TestResults/
+*.trx
+
+# Build output
 **/bin/
 !/bin/
 !/bin/**
 **/obj/
-*.log
+*.tsbuildinfo
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# IDE and operating-system files
+.vs/
+*.user
+*.suo
 .DS_Store
+
+# Logs
+*.log
