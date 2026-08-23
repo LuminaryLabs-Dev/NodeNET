@@ -9,6 +9,8 @@ on:
       - 'bridge/**'
       - 'bin/**'
       - 'test/integration/avalonia.test.mjs'
+      - 'test/fixtures/avalonia-runtime/**'
+      - 'scripts/lib/avalonia-runtime.mjs'
       - 'src/display/**'
       - 'src/services/display.js'
       - '.github/workflows/framework.yml'
@@ -19,10 +21,7 @@ permissions:
   contents: read
 
 env:
-  NODENET_INTEGRATION: '1'
   NODENET_AVALONIA: '1'
-  NODENET_TEST_SDK: '10.0'
-  NODENET_KEEP_AVALONIA_ARTIFACTS: '1'
 
 jobs:
   avalonia-headless:
@@ -37,10 +36,10 @@ jobs:
         with:
           node-version: 22
       - run: npm ci --ignore-scripts
-      - name: Create, build, interact with, and render Avalonia headlessly
+      - name: Restore, build, interact with, and render the locked Avalonia fixture
         env:
           NODENET_AVALONIA_OUTPUT: artifacts/avalonia-${{ runner.os }}
-        run: node --test test/integration/avalonia.test.mjs
+        run: npm run test:avalonia
       - uses: actions/upload-artifact@v4
         if: always()
         with:

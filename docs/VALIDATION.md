@@ -4,6 +4,35 @@ This document is the canonical NodeNET closeout and release-validation procedure
 
 A feature is not considered validated merely because its code exists. Record evidence at the strongest environment that can actually exercise the behavior.
 
+## 0. One-command local release-candidate gate
+
+From a clean `main` checkout after `npm ci --ignore-scripts`:
+
+```bash
+npm run validate:local
+npm run validate:local:visible
+```
+
+`validate:local` runs the static/unit, software display, real tarball, clean runtime consumer, strict NodeNext TypeScript, fresh private .NET, exact C# frame/input, and real Avalonia headless gates. It restores the permanent fixture in NuGet locked mode and records semantic state plus changed pixels rather than requiring one host-specific full-image hash.
+
+`validate:local:visible` runs the same automated ladder and then opens the shared Avalonia calculator through the normal desktop backend on macOS. Click `1`, `2`, `+`, `7`, `=`, confirm `19`, and close the window. The visible gate reads the actual C# state written when that window closes.
+
+Every run writes:
+
+```text
+artifacts/local-validation/<run-id>/
+  REPORT.md
+  summary.json
+  environment.json
+  commands.log
+  software/
+  dotnet/
+  avalonia/
+  nodenet-local-validation.zip
+```
+
+`artifacts/local-validation/latest/` contains a copy of the newest result. Every gate is `PASS`, `FAIL`, `BLOCKED`, or `SKIPPED`; missing network, GUI, or platform evidence cannot become a pass. The report archive contains no private SDK, package cache, temporary consumer, host name, environment-variable dump, or secrets.
+
 ## 1. Static and unit gate
 
 From a clean checkout:
@@ -94,15 +123,15 @@ Real stdout/results must be asserted; exit code zero alone is insufficient.
 ## 4. Avalonia framework acceptance
 
 ```bash
-NODENET_INTEGRATION=1 NODENET_AVALONIA=1 npm run test:integration
+NODENET_AVALONIA=1 npm run test:avalonia
 ```
 
 The framework acceptance workflow should prove:
 
 ```text
 NodeNET
-→ managed .NET
-→ Avalonia template/project
+→ exact managed .NET SDK 10.0.400
+→ permanent locked Avalonia 12.1.1 projects
 → restore/build
 → headless startup
 → DisplayService process handshake
@@ -112,7 +141,7 @@ NodeNET
 → PNG rendering and verification JSON
 ```
 
-Avalonia remains a validation workload above NodeNET rather than a core dependency. The workflow must upload the initial, expression, and result screenshots even when the job fails so rendering failures remain inspectable.
+`Calculator.Shared` owns the live C# state and real AXAML controls. `Calculator.Headless` owns automated rendering/input, while `Calculator.App` owns the normal visible desktop entrypoint. Avalonia remains a validation workload above NodeNET rather than a core dependency. The workflow must upload the initial, expression, and result screenshots even when the job fails so rendering failures remain inspectable.
 
 ## 5. Negative behavior
 
@@ -246,4 +275,4 @@ An empty connector result is **not** treated as a successful CI result.
 
 ## Current sandbox limitation
 
-The ChatGPT sandbox used during the 0.3.1 and 0.3.2 closeouts can run Node/TypeScript/package tests but does not provide a usable local .NET SDK and cannot substitute for network-backed real .NET/Avalonia acceptance. For 0.3.2, the exact linked GitHub-hosted runs supply that evidence; this limitation records where the work ran rather than leaving those release gates unverified.
+The current ChatGPT sandbox provisioned the exact private .NET SDK `10.0.400` through NodeNET and completed the fixture's locked NuGet restores. Its policy broker terminated managed compiler child execution before approval could complete, so this environment cannot supply new C# build/runtime evidence. The push-triggered GitHub-hosted matrices must provide that proof, and the visible desktop gate remains reserved for the clean Mac report. These limitations are recorded as unavailable evidence, never inferred passes.

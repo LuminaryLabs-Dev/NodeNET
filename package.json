@@ -17,7 +17,8 @@
   },
   "files": [
     "src",
-    "bridge",
+    "bridge/**/*.cs",
+    "bridge/**/*.csproj",
     "bin",
     "docs",
     "types",
@@ -31,7 +32,13 @@
     "test:integration": "node scripts/run-tests.mjs integration",
     "test:all": "npm test && npm run test:integration",
     "check": "node scripts/check.mjs",
-    "test:display": "node scripts/display-proof.mjs --output artifacts/display"
+    "test:display": "node scripts/display-proof.mjs --output artifacts/display",
+    "test:avalonia": "node --test test/integration/avalonia.test.mjs",
+    "validate:local": "node scripts/local-validation.mjs",
+    "validate:local:visible": "node scripts/local-validation.mjs --visible"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
   },
   "engines": {
     "node": ">=20"

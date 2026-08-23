@@ -252,7 +252,7 @@ nodenet build
 nodenet run
 ```
 
-The opt-in framework acceptance workflow creates a real Avalonia calculator, sends Node pointer input into its controls, verifies `12 + 7 = 19`, and captures the initial, expression, and result frames through DisplayService.
+The repository contains a permanent, version-locked calculator fixture shared by a headless entrypoint and a normal desktop entrypoint. Framework acceptance builds that real C# project, sends Node pointer input into its Avalonia controls, verifies `12 + 7 = 19`, and captures the initial, expression, and result frames through DisplayService.
 
 ## Supported host identities
 
@@ -289,8 +289,17 @@ NODENET_INTEGRATION=1 npm run test:integration
 Avalonia acceptance:
 
 ```bash
-NODENET_INTEGRATION=1 NODENET_AVALONIA=1 npm run test:integration
+NODENET_AVALONIA=1 npm run test:avalonia
 ```
+
+Complete local production validation and the additional macOS window confirmation:
+
+```bash
+npm run validate:local
+npm run validate:local:visible
+```
+
+Each local run writes a self-contained report under `artifacts/local-validation/`. The visible command requires clicking `1`, `2`, `+`, `7`, `=`, confirming `19`, and closing the real Avalonia window.
 
 ## Canonical project state
 

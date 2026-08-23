@@ -157,6 +157,8 @@ The default `software-framebuffer` provider is headless, zero-dependency, and la
 
 The versioned binary process adapter and `bridge/NodeNET.Display` C# helper allow a real .NET process to submit RGBA8 frames and receive normalized input. Framework adapters remain optional. Avalonia owns its visual tree, layout, Skia rendering, and control input; its acceptance fixture normalizes the result into NodeNET frames.
 
+The Avalonia workload is now permanent and version-locked under `test/fixtures/avalonia-runtime`. `Calculator.Shared` owns the live C# calculator state and AXAML controls; `Calculator.Headless` drives the automated NodeNET frame/input round trip; `Calculator.App` opens the same controls as a normal desktop window. It is a runtime fixture, not a golden screenshot or a NodeNET product dependency.
+
 V1 rejects unsupported formats, padded/invalid strides, malformed payload sizes, and frames above the configured allocation limit.
 
 ## Host identities
@@ -192,10 +194,12 @@ Avalonia is the first real DisplayService acceptance adapter and remains a valid
 
 ## Validation
 
-The 0.3.2 closeout passes the full local Node/software/package gates and the hosted portable-.NET and real-Avalonia acceptance matrices on Windows, macOS, and Linux. The canonical procedure, linked workflow runs, frame hashes, screenshot evidence, and distinction between locally proven and network-backed gates are in [`VALIDATION.md`](VALIDATION.md).
+`npm run validate:local` now produces one auditable report containing repository state, all Node tests, the software calculator, npm tarball and clean consumers, strict NodeNext TypeScript, a fresh private .NET SDK, exact C# RGBA/input evidence, and real Avalonia headless screenshots. `npm run validate:local:visible` additionally requires a human to complete `12 + 7 = 19` in the real macOS window before closing it.
+
+The earlier 0.3.2 implementation passed the hosted portable-.NET and real-Avalonia matrices on Windows, macOS, and Linux. Version `0.3.2` remains a release candidate until the new clean local report and visible macOS gate pass. The canonical procedure and historical evidence are in [`VALIDATION.md`](VALIDATION.md).
 
 ## Next milestone
 
-`0.4.0` focuses on **bidirectional CLR interoperability**: callbacks/delegates, events, cancellation, richer method semantics, stream improvements, protocol feature negotiation, and an explicit concurrency model.
+First close the clean macOS report, tag, and publish `v0.3.2`. The first maintenance release is `0.3.3`. The next feature line, `0.4.0`, focuses on **bidirectional CLR interoperability**: callbacks/delegates, events, cancellation, richer method semantics, stream improvements, protocol feature negotiation, and an explicit concurrency model.
 
 Do not begin container/remote execution or framework expansion merely because the architecture permits it. Those remain later milestones after the 0.3.x portability foundation stays stable.

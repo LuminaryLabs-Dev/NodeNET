@@ -19,7 +19,14 @@ NODENET_INTEGRATION=1 npm run test:integration
 Framework acceptance:
 
 ```bash
-NODENET_INTEGRATION=1 NODENET_AVALONIA=1 npm run test:integration
+NODENET_AVALONIA=1 npm run test:avalonia
+```
+
+Release-candidate validation on a clean `main` checkout:
+
+```bash
+npm run validate:local
+npm run validate:local:visible  # macOS manual window gate
 ```
 
 ## Change rules

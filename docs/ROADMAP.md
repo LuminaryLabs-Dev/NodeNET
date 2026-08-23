@@ -14,9 +14,11 @@ Delivered by 0.3.2:
 - CLR values, handles, descriptors, binary payloads, and streams
 - zero-dependency DisplayService, RGBA8 frames, normalized input, and PNG evidence
 - managed-.NET frame submission and real Avalonia input/render acceptance
+- permanent shared/headless/desktop Avalonia runtime fixture with exact SDK/package locks
+- one-command local production report and manual macOS window gate
 - real Windows/macOS/Linux portable and Avalonia acceptance
 
-Maintenance rule: keep these portability, package, display, and framework acceptance gates green while 0.4.0 work proceeds; do not add speculative execution providers or framework semantics to the 0.3.x foundation.
+Closeout rule: keep `0.3.2` as a release candidate until a clean Mac passes both local commands, then tag and publish it. Use `0.3.3` for the first maintenance release. Keep these portability, package, display, and framework acceptance gates green while 0.4.0 work proceeds; do not add speculative execution providers or framework semantics to the 0.3.x foundation.
 
 ## 0.4.0 — Bidirectional CLR interoperability
 

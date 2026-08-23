@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        d:DesignWidth="420"
+        d:DesignHeight="640"
+        x:Class="NodeNET.RuntimeFixture.CalculatorWindow"
+        Width="420"
+        Height="640"
+        MinWidth="360"
+        MinHeight="560"
+        Background="#080D1F"
+        Title="NodeNET Display Validator">
+  <Grid Margin="24" RowDefinitions="84,150,42,*">
+    <StackPanel Grid.Row="0" Spacing="8">
+      <TextBlock Text="NODENET" Foreground="#43DBDA" FontSize="25" FontWeight="Bold" />
+      <TextBlock Text="LIVE AVALONIA RUNTIME" Foreground="#7D92B5" FontSize="13" />
+    </StackPanel>
+
+    <Border Grid.Row="1" Background="#111B36" CornerRadius="18" Padding="22">
+      <StackPanel VerticalAlignment="Center" Spacing="18">
+        <TextBlock x:Name="Expression" Text="READY" Foreground="#7D92B5" FontSize="14" />
+        <TextBlock x:Name="Display" Text="0" Foreground="#F0F6FF" FontSize="50" HorizontalAlignment="Right" />
+      </StackPanel>
+    </Border>
+
+    <TextBlock Grid.Row="2" Text="REAL CONTROLS / LIVE C# STATE / RGBA8" Foreground="#7D92B5" FontSize="11" VerticalAlignment="Center" />
+
+    <Grid Grid.Row="3" RowDefinitions="*,*,*,*" ColumnDefinitions="*,*,*,*" RowSpacing="12" ColumnSpacing="12">
+      <Button x:Name="B7" Grid.Row="0" Grid.Column="0" Content="7" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B8" Grid.Row="0" Grid.Column="1" Content="8" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B9" Grid.Row="0" Grid.Column="2" Content="9" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BDivide" Grid.Row="0" Grid.Column="3" Content="/" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B4" Grid.Row="1" Grid.Column="0" Content="4" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B5" Grid.Row="1" Grid.Column="1" Content="5" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B6" Grid.Row="1" Grid.Column="2" Content="6" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BMinus" Grid.Row="1" Grid.Column="3" Content="-" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B1" Grid.Row="2" Grid.Column="0" Content="1" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B2" Grid.Row="2" Grid.Column="1" Content="2" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B3" Grid.Row="2" Grid.Column="2" Content="3" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BPlus" Grid.Row="2" Grid.Column="3" Content="+" Click="OnButton" Background="#50399E" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="B0" Grid.Row="3" Grid.Column="0" Content="0" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BDot" Grid.Row="3" Grid.Column="1" Content="." Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BClear" Grid.Row="3" Grid.Column="2" Content="C" Click="OnButton" Background="#1C2949" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+      <Button x:Name="BEquals" Grid.Row="3" Grid.Column="3" Content="=" Click="OnButton" Background="#E26236" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
+    </Grid>
+  </Grid>
+</Window>

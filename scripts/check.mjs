@@ -14,8 +14,13 @@ if (packageJson.exports?.['.']?.import !== './src/index.js' || packageJson.expor
 if (packageJson.bin?.nodenet !== './bin/nodenet.js') throw new Error('The nodenet executable mapping must remain ./bin/nodenet.js.');
 if (packageJson.types !== './types/index.d.ts') throw new Error('Package TypeScript declarations must remain ./types/index.d.ts.');
 if (!packageJson.files?.includes('types')) throw new Error('Published package files must include TypeScript declarations.');
+if (!packageJson.files?.includes('bridge/**/*.cs') || !packageJson.files?.includes('bridge/**/*.csproj')) throw new Error('Published bridge files must be source-only globs.');
+if (packageJson.files?.includes('bridge')) throw new Error('Publishing the entire bridge directory can leak generated bin/obj content.');
 if (!packageJson.repository?.url || !packageJson.homepage || !packageJson.bugs?.url) throw new Error('Public package repository/homepage/bugs metadata is required.');
 if (packageJson.version !== packageLock.version || packageJson.version !== packageLock.packages?.['']?.version) throw new Error('package.json and package-lock.json versions must match.');
+if (packageJson.devDependencies?.typescript !== '7.0.2') throw new Error('Local production validation must pin TypeScript 7.0.2.');
+if (packageJson.scripts?.['validate:local'] !== 'node scripts/local-validation.mjs') throw new Error('validate:local must remain the canonical local production validator.');
+if (packageJson.scripts?.['validate:local:visible'] !== 'node scripts/local-validation.mjs --visible') throw new Error('validate:local:visible must remain the visible desktop validator.');
 
 const required = [
   'src/index.js','src/nodenet.js','src/version.js','src/cache.js',
@@ -26,6 +31,11 @@ const required = [
   'src/cli/cli.js','src/cli/help.js','src/cli/progress.js',
   'src/interop/protocol/framing.js','src/dotnet/provision.js','src/project/prepare.js',
   'bridge/NodeNET.Bridge/NodeNET.Bridge.csproj','bridge/NodeNET.Display/NodeNET.Display.csproj','bridge/NodeNET.Display/NodeNETDisplay.cs','types/index.d.ts',
+  'scripts/local-validation.mjs','scripts/lib/avalonia-runtime.mjs','scripts/lib/validation-artifacts.mjs',
+  'test/fixtures/avalonia-runtime/global.json','test/fixtures/avalonia-runtime/packages.lock.json',
+  'test/fixtures/avalonia-runtime/Calculator.Shared/Calculator.Shared.csproj','test/fixtures/avalonia-runtime/Calculator.Shared/CalculatorWindow.axaml',
+  'test/fixtures/avalonia-runtime/Calculator.Headless/Calculator.Headless.csproj','test/fixtures/avalonia-runtime/Calculator.Headless/packages.lock.json',
+  'test/fixtures/avalonia-runtime/Calculator.App/Calculator.App.csproj','test/fixtures/avalonia-runtime/Calculator.App/packages.lock.json',
   'CHANGELOG.md','CONTRIBUTING.md','SECURITY.md','CODE_OF_CONDUCT.md',
   'docs/CURRENT_STATE.md','docs/DISPLAY.md','docs/VALIDATION.md','docs/ROADMAP.md'
 ];
