@@ -1,0 +1,23 @@
+{
+  "name": "framebuffer-paint-live-input",
+  "steps": [
+    { "action": "capture", "name": "initial" },
+    { "action": "pointer", "event": { "type": "click", "x": 283, "y": 25, "button": 0 } },
+    { "action": "pointer", "event": { "type": "down", "x": 70, "y": 360, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 145, "y": 170, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 235, "y": 330, "button": 0 } },
+    { "action": "pointer", "event": { "type": "up", "x": 315, "y": 145, "button": 0 } },
+    { "action": "capture", "name": "first-stroke" },
+    { "action": "pointer", "event": { "type": "click", "x": 321, "y": 25, "button": 0 } },
+    { "action": "pointer", "event": { "type": "click", "x": 142, "y": 66, "button": 0 } },
+    { "action": "pointer", "event": { "type": "down", "x": 335, "y": 375, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 410, "y": 190, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 500, "y": 345, "button": 0 } },
+    { "action": "pointer", "event": { "type": "up", "x": 585, "y": 170, "button": 0 } },
+    { "action": "capture", "name": "painted" },
+    { "action": "pointer", "event": { "type": "click", "x": 472, "y": 65, "button": 0 } },
+    { "action": "capture", "name": "undo" },
+    { "action": "pointer", "event": { "type": "click", "x": 576, "y": 65, "button": 0 } },
+    { "action": "capture", "name": "cleared" }
+  ]
+}

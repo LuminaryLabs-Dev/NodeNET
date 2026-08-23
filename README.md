@@ -239,6 +239,20 @@ Graphical child processes can submit raw frames over NodeNET's binary protocol a
 
 See [`docs/DISPLAY.md`](docs/DISPLAY.md).
 
+## Example applications
+
+The repository includes four live software-framebuffer applications that exercise NodeNET through normalized pointer/key input and generate fresh screenshot evidence:
+
+```bash
+npm run example:paint
+npm run example:notepad
+npm run example:filters
+npm run example:studio
+npm run validate:examples
+```
+
+See [`examples/README.md`](examples/README.md). Generated screenshots and verification reports are written under `artifacts/examples/` and remain outside the published npm package.
+
 ## Avalonia
 
 Avalonia remains a framework on top of NodeNET rather than a dependency embedded into core.

@@ -34,6 +34,11 @@
     "check": "node scripts/check.mjs",
     "test:display": "node scripts/display-proof.mjs --output artifacts/display",
     "test:avalonia": "node --test test/integration/avalonia.test.mjs",
+    "example:paint": "node examples/framebuffer-paint/run.mjs",
+    "example:notepad": "node examples/keyboard-notepad/run.mjs",
+    "example:filters": "node examples/image-filter-lab/run.mjs",
+    "example:studio": "node examples/self-contained-app/run.mjs",
+    "validate:examples": "node scripts/validate-examples.mjs",
     "validate:local": "node scripts/local-validation.mjs",
     "validate:local:visible": "node scripts/local-validation.mjs --visible"
   },

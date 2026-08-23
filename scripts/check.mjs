@@ -64,7 +64,7 @@ function run(command, args, options = {}) {
   });
 }
 
-for (const directory of ['src','bin','scripts','test']) {
+for (const directory of ['src','bin','scripts','test','examples']) {
   for (const file of await collect(path.join(root, directory))) await run(process.execPath, ['--check', file], { stdio: 'ignore' });
 }
 await run(process.execPath, [path.join(root, 'scripts', 'run-tests.mjs'), 'unit']);

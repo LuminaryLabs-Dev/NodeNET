@@ -1,0 +1,33 @@
+{
+  "name": "keyboard-notepad-live-input",
+  "steps": [
+    { "action": "capture", "name": "initial" },
+    { "action": "key", "event": { "type": "text", "key": "ignored", "code": "" } },
+    { "action": "pointer", "event": { "type": "click", "x": 100, "y": 130, "button": 0 } },
+    { "action": "capture", "name": "focused" },
+    { "action": "key", "event": { "type": "text", "key": "N", "code": "KeyN" } },
+    { "action": "key", "event": { "type": "text", "key": "o", "code": "KeyO" } },
+    { "action": "key", "event": { "type": "text", "key": "d", "code": "KeyD" } },
+    { "action": "key", "event": { "type": "text", "key": "e", "code": "KeyE" } },
+    { "action": "key", "event": { "type": "text", "key": "N", "code": "KeyN" } },
+    { "action": "key", "event": { "type": "text", "key": "E", "code": "KeyE" } },
+    { "action": "key", "event": { "type": "text", "key": "T", "code": "KeyT" } },
+    { "action": "key", "event": { "type": "down", "key": "Enter", "code": "Enter" } },
+    { "action": "key", "event": { "type": "up", "key": "Enter", "code": "Enter" } },
+    { "action": "key", "event": { "type": "text", "key": "w", "code": "KeyW" } },
+    { "action": "key", "event": { "type": "text", "key": "o", "code": "KeyO" } },
+    { "action": "key", "event": { "type": "text", "key": "r", "code": "KeyR" } },
+    { "action": "key", "event": { "type": "text", "key": "k", "code": "KeyK" } },
+    { "action": "key", "event": { "type": "text", "key": "s", "code": "KeyS" } },
+    { "action": "key", "event": { "type": "text", "key": "X", "code": "KeyX" } },
+    { "action": "key", "event": { "type": "down", "key": "Backspace", "code": "Backspace" } },
+    { "action": "key", "event": { "type": "up", "key": "Backspace", "code": "Backspace" } },
+    { "action": "capture", "name": "typed" },
+    { "action": "key", "event": { "type": "down", "key": "ArrowLeft", "code": "ArrowLeft" } },
+    { "action": "key", "event": { "type": "up", "key": "ArrowLeft", "code": "ArrowLeft" } },
+    { "action": "key", "event": { "type": "text", "key": "!", "code": "Digit1", "modifiers": { "shift": true } } },
+    { "action": "capture", "name": "edited" },
+    { "action": "pointer", "event": { "type": "click", "x": 576, "y": 32, "button": 0 } },
+    { "action": "capture", "name": "cleared" }
+  ]
+}

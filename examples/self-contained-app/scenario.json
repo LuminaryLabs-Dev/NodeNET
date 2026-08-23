@@ -1,0 +1,29 @@
+{
+  "name": "nodenet-studio-multi-screen-runtime",
+  "steps": [
+    { "action": "capture", "name": "home" },
+    { "action": "key", "event": { "type": "text", "key": "ignored", "code": "" } },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 169, "button": 0 } },
+    { "action": "pointer", "event": { "type": "down", "x": 240, "y": 360, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 350, "y": 180, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 480, "y": 350, "button": 0 } },
+    { "action": "pointer", "event": { "type": "up", "x": 650, "y": 170, "button": 0 } },
+    { "action": "capture", "name": "canvas" },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 227, "button": 0 } },
+    { "action": "pointer", "event": { "type": "click", "x": 260, "y": 160, "button": 0 } },
+    { "action": "key", "event": { "type": "text", "key": "Studio note", "code": "" } },
+    { "action": "capture", "name": "notes" },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 285, "button": 0 } },
+    { "action": "pointer", "event": { "type": "click", "x": 462, "y": 104, "button": 0 } },
+    { "action": "capture", "name": "filters" },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 169, "button": 0 } },
+    { "action": "capture", "name": "restored-canvas" },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 227, "button": 0 } },
+    { "action": "capture", "name": "restored-notes" },
+    { "action": "pointer", "event": { "type": "click", "x": 78, "y": 343, "button": 0 } },
+    { "action": "capture", "name": "about" },
+    { "action": "key", "event": { "type": "down", "key": "1", "code": "Digit1" } },
+    { "action": "key", "event": { "type": "up", "key": "1", "code": "Digit1" } },
+    { "action": "capture", "name": "final" }
+  ]
+}

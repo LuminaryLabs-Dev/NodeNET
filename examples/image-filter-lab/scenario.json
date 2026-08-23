@@ -1,0 +1,22 @@
+{
+  "name": "image-filter-lab-live-input",
+  "steps": [
+    { "action": "capture", "name": "original" },
+    { "action": "pointer", "event": { "type": "click", "x": 188, "y": 441, "button": 0 } },
+    { "action": "capture", "name": "invert" },
+    { "action": "pointer", "event": { "type": "click", "x": 311, "y": 441, "button": 0 } },
+    { "action": "capture", "name": "grayscale" },
+    { "action": "pointer", "event": { "type": "click", "x": 447, "y": 441, "button": 0 } },
+    { "action": "pointer", "event": { "type": "down", "x": 240, "y": 498, "button": 0 } },
+    { "action": "pointer", "event": { "type": "up", "x": 240, "y": 498, "button": 0 } },
+    { "action": "capture", "name": "threshold-low" },
+    { "action": "pointer", "event": { "type": "down", "x": 610, "y": 498, "button": 0 } },
+    { "action": "pointer", "event": { "type": "move", "x": 640, "y": 498, "button": 0 } },
+    { "action": "pointer", "event": { "type": "up", "x": 640, "y": 498, "button": 0 } },
+    { "action": "capture", "name": "threshold-high" },
+    { "action": "pointer", "event": { "type": "click", "x": 566, "y": 441, "button": 0 } },
+    { "action": "capture", "name": "sepia" },
+    { "action": "pointer", "event": { "type": "click", "x": 74, "y": 441, "button": 0 } },
+    { "action": "capture", "name": "restored-original" }
+  ]
+}
