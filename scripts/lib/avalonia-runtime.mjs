@@ -79,10 +79,27 @@ export async function publishBrowserFixture({ net, repositoryRoot, workDirectory
     cwd: path.dirname(project),
     timeout: 30 * 60_000
   }, onCommand);
-  const restore = await checkedExec(net, ['restore', project, '--nologo', '--locked-mode'], {
-    cwd: path.dirname(project),
-    timeout: 10 * 60_000
-  }, onCommand);
+  let restore;
+  try {
+    const restore = await checkedExec(net, ['restore', project, '--nologo', '--locked-mode'], {
+      cwd: path.dirname(project),
+      timeout: 10 * 60_000
+    }, onCommand);
+  } catch (error) {
+    // Preserve the strict failure. Save a lock candidate separately as evidence;
+    // never treat a regenerated lock as a passing locked restore.
+    if (process.env.NODENET_AVALONIA_LOCK_DIAGNOSTICS === '1') {
+      const probe = await net.exec(['restore', project, '--nologo', '--force-evaluate'], {
+        cwd: path.dirname(project), rejectOnNonZero: false, timeout: 10 * 60_000
+      });
+      if (probe.ok) {
+        await fs.mkdir(outputDirectory, { recursive: true });
+        await fs.copyFile(path.join(path.dirname(project), 'packages.lock.json'),
+          path.join(outputDirectory, 'candidate-packages.lock.json'));
+      }
+    }
+    throw error;
+  }
   const publish = await checkedExec(net, ['publish', project, '--configuration', 'Release', '--output', outputDirectory, '--no-restore', '--nologo', '-p:WasmBuildNative=true', '-p:WasmEnableSIMD=true', '-p:EmccLinkOptimizationFlag=-O1'], {
     cwd: path.dirname(project),
     timeout: 30 * 60_000
