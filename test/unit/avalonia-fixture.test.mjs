@@ -42,7 +42,7 @@ test('permanent Avalonia fixture pins SDK, packages, and lock graphs', async () 
 });
 
 test('shared calculator owns live controls/state and headless compiles the canonical display helper', async () => {
-  const window = await fs.readFile(path.join(fixture, 'Calculator.Shared', 'CalculatorWindow.axaml'), 'utf8');
+  const window = await fs.readFile(path.join(fixture, 'Calculator.Shared', 'CalculatorView.axaml'), 'utf8');
   const state = await fs.readFile(path.join(fixture, 'Calculator.Shared', 'CalculatorState.cs'), 'utf8');
   const headless = await fs.readFile(path.join(fixture, 'Calculator.Headless', 'Calculator.Headless.csproj'), 'utf8');
   const integration = await fs.readFile(path.join(root, 'test', 'integration', 'avalonia.test.mjs'), 'utf8');

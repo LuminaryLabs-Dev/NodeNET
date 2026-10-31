@@ -33,9 +33,10 @@ const required = [
   'bridge/NodeNET.Bridge/NodeNET.Bridge.csproj','bridge/NodeNET.Display/NodeNET.Display.csproj','bridge/NodeNET.Display/NodeNETDisplay.cs','types/index.d.ts',
   'scripts/local-validation.mjs','scripts/lib/avalonia-runtime.mjs','scripts/lib/validation-artifacts.mjs',
   'test/fixtures/avalonia-runtime/global.json','test/fixtures/avalonia-runtime/packages.lock.json',
-  'test/fixtures/avalonia-runtime/Calculator.Shared/Calculator.Shared.csproj','test/fixtures/avalonia-runtime/Calculator.Shared/CalculatorWindow.axaml',
+  'test/fixtures/avalonia-runtime/Calculator.Shared/Calculator.Shared.csproj','test/fixtures/avalonia-runtime/Calculator.Shared/CalculatorView.axaml',
   'test/fixtures/avalonia-runtime/Calculator.Headless/Calculator.Headless.csproj','test/fixtures/avalonia-runtime/Calculator.Headless/packages.lock.json',
   'test/fixtures/avalonia-runtime/Calculator.App/Calculator.App.csproj','test/fixtures/avalonia-runtime/Calculator.App/packages.lock.json',
+  'test/fixtures/avalonia-runtime/Calculator.Browser/Calculator.Browser.csproj','test/fixtures/avalonia-runtime/Calculator.Browser/packages.lock.json',
   'CHANGELOG.md','CONTRIBUTING.md','SECURITY.md','CODE_OF_CONDUCT.md',
   'docs/CURRENT_STATE.md','docs/DISPLAY.md','docs/VALIDATION.md','docs/ROADMAP.md'
 ];

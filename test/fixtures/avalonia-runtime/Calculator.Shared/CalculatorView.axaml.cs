@@ -3,9 +3,9 @@ using Avalonia.Interactivity;
 
 namespace NodeNET.RuntimeFixture;
 
-public partial class CalculatorWindow : Window
+public partial class CalculatorView : UserControl
 {
-    public CalculatorWindow()
+    public CalculatorView()
     {
         InitializeComponent();
         State = new CalculatorState();

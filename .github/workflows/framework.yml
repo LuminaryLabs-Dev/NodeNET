@@ -9,8 +9,10 @@ on:
       - 'bridge/**'
       - 'bin/**'
       - 'test/integration/avalonia.test.mjs'
+      - 'test/integration/avalonia-wasm.test.mjs'
       - 'test/fixtures/avalonia-runtime/**'
       - 'scripts/lib/avalonia-runtime.mjs'
+      - 'test/fixtures/avalonia-runtime/Calculator.Browser/**'
       - 'src/display/**'
       - 'src/services/display.js'
       - '.github/workflows/framework.yml'
@@ -45,4 +47,24 @@ jobs:
         with:
           name: avalonia-${{ runner.os }}
           path: artifacts/
+          if-no-files-found: warn
+
+  avalonia-browser-wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - name: Publish the locked Avalonia browser app with the managed SDK
+        env:
+          NODENET_AVALONIA: '1'
+          NODENET_AVALONIA_WASM_OUTPUT: artifacts/avalonia-wasm
+        run: npm run test:avalonia:wasm
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: avalonia-browser-wasm
+          path: artifacts/avalonia-wasm/
           if-no-files-found: warn

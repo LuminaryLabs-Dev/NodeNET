@@ -13,6 +13,19 @@
           "MicroCom.Runtime": "0.11.6"
         }
       },
+      "Avalonia.Browser": {
+        "type": "Direct",
+        "requested": "[12.1.1, )",
+        "resolved": "12.1.1",
+        "contentHash": "3pxvTgZw67H5U5jNlE6GcmDKs9ouIeUr4NhrVQmijLU9tpN45GM6Wv3l9PCDXp7GItoR9ssasAzJoRQDTSMeHg==",
+        "dependencies": {
+          "Avalonia": "12.1.1",
+          "Avalonia.HarfBuzz": "12.1.1",
+          "Avalonia.Skia": "12.1.1",
+          "HarfBuzzSharp": "8.3.1.3",
+          "SkiaSharp": "3.119.4"
+        }
+      },
       "Avalonia.Desktop": {
         "type": "Direct",
         "requested": "[12.1.1, )",

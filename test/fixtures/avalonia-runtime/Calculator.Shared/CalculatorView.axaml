@@ -1,17 +1,12 @@
-<Window xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         d:DesignWidth="420"
         d:DesignHeight="640"
-        x:Class="NodeNET.RuntimeFixture.CalculatorWindow"
-        Width="420"
-        Height="640"
-        MinWidth="360"
-        MinHeight="560"
-        Background="#080D1F"
-        Title="NodeNET Display Validator">
+        x:Class="NodeNET.RuntimeFixture.CalculatorView"
+        Background="#080D1F">
   <Grid Margin="24" RowDefinitions="84,150,42,*">
     <StackPanel Grid.Row="0" Spacing="8">
       <TextBlock Text="NODENET" Foreground="#43DBDA" FontSize="25" FontWeight="Bold" />
@@ -46,4 +41,4 @@
       <Button x:Name="BEquals" Grid.Row="3" Grid.Column="3" Content="=" Click="OnButton" Background="#E26236" Foreground="#F0F6FF" FontSize="20" FontWeight="SemiBold" />
     </Grid>
   </Grid>
-</Window>
+</UserControl>

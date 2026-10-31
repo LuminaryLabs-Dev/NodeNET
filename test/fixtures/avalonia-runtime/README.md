@@ -5,6 +5,7 @@ This fixture is a live acceptance workload, not the NodeNET product and not a go
 - `Calculator.Shared` owns the calculator state, AXAML window, and real controls.
 - `Calculator.Headless` renders that window through Avalonia Headless, compiles the canonical `bridge/NodeNET.Display/NodeNETDisplay.cs` helper source, exposes frames through `NodeNET.Display`, and accepts NodeNET pointer input.
 - `Calculator.App` opens the same shared window through Avalonia Desktop for manual local confirmation.
+- `Calculator.Browser` publishes the same live controls and C# calculator state as a .NET WebAssembly site using Avalonia Browser.
 - `global.json` pins the private SDK to `10.0.400` with roll-forward disabled.
 - Every direct Avalonia package is pinned to `12.1.1`. The root aggregate and each project use NuGet lock files, and validation restores them in locked mode.
 
@@ -16,5 +17,13 @@ From the repository root, run:
 npm run validate:local
 npm run validate:local:visible
 ```
+
+Publish the browser app with the pinned managed SDK and the WebAssembly workload:
+
+```bash
+NODENET_AVALONIA=1 npm run test:avalonia:wasm
+```
+
+The published static site is written under `artifacts/avalonia-wasm/publish-<run-id>/`. Serve that directory from an HTTP origin to load the Avalonia app in a browser; opening `index.html` as a `file:` URL is not supported. The workflow retains the published output and a machine-readable publish report as artifacts.
 
 For the visible gate, click `1`, `2`, `+`, `7`, `=`, confirm the display reads `19`, and close the window. The command records the observed C# state in the local validation report.

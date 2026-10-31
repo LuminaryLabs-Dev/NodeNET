@@ -74,6 +74,8 @@ Protocol requests are `display.connect`, `display.pointer`, `display.key`, `disp
 
 The Avalonia acceptance fixture owns the framework-specific work: headless startup, real control input, rendered-frame capture, BGRA/RGBA normalization, and submission into `FrameSurface`.
 
+The same permanent fixture also contains a real `net10.0-browser` Avalonia Browser entrypoint. Its WebAssembly acceptance restores the pinned workload, publishes the desktop-shared controls and live C# calculator state as a static site, and verifies the generated browser loader, app assembly, and WASM runtime assets. Serve the published directory over HTTP(S) to run it; this browser target is not part of NodeNET core.
+
 ## Acceptance proof
 
 The deterministic proof uses one scenario at both levels:

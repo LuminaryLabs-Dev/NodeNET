@@ -143,6 +143,14 @@ NodeNET
 
 `Calculator.Shared` owns the live C# state and real AXAML controls. `Calculator.Headless` owns automated rendering/input, while `Calculator.App` owns the normal visible desktop entrypoint. Avalonia remains a validation workload above NodeNET rather than a core dependency. The workflow must upload the initial, expression, and result screenshots even when the job fails so rendering failures remain inspectable.
 
+The separate Linux browser-WASM gate runs:
+
+```bash
+NODENET_AVALONIA=1 npm run test:avalonia:wasm
+```
+
+It installs the official .NET WebAssembly workload into the managed SDK environment, publishes `Calculator.Browser` in Release mode, and verifies the actual static-site output includes its entry page, browser bootstrap, managed app assembly, and `.wasm` runtime files. The published output is retained as a CI artifact and can be served over HTTP(S) for interactive browser acceptance.
+
 ## 5. Negative behavior
 
 Keep tests for:

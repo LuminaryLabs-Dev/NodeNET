@@ -31,11 +31,11 @@ internal static class Program
         var surface = session.CreateSurface(width, height);
         var controls = new Dictionary<string, Center>
         {
-            ["1"] = CenterOf(window.FindControl<Button>("B1")!, window),
-            ["2"] = CenterOf(window.FindControl<Button>("B2")!, window),
-            ["+"] = CenterOf(window.FindControl<Button>("BPlus")!, window),
-            ["7"] = CenterOf(window.FindControl<Button>("B7")!, window),
-            ["="] = CenterOf(window.FindControl<Button>("BEquals")!, window)
+            ["1"] = CenterOf(window.Calculator.FindControl<Button>("B1")!, window),
+            ["2"] = CenterOf(window.Calculator.FindControl<Button>("B2")!, window),
+            ["+"] = CenterOf(window.Calculator.FindControl<Button>("BPlus")!, window),
+            ["7"] = CenterOf(window.Calculator.FindControl<Button>("B7")!, window),
+            ["="] = CenterOf(window.Calculator.FindControl<Button>("BEquals")!, window)
         };
 
         var connect = session.ReadRequest() ?? throw new EndOfStreamException("Node closed before the display handshake.");
