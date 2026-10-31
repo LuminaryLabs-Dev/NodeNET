@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NodeNET } from '../../src/index.js';
 import {
-  DOTNET_SDK_VERSION,
+  BROWSER_BROWSER_DOTNET_SDK_VERSION,
   publishBrowserFixture,
   shutdownBuildServers
 } from '../../scripts/lib/avalonia-runtime.mjs';
@@ -37,14 +37,14 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
     mode: 'shared',
     home,
     isolation: 'managed',
-    sdk: DOTNET_SDK_VERSION,
+    sdk: BROWSER_DOTNET_SDK_VERSION,
     writeState: false
   });
 
   try {
     const context = await net.prepare({ restore: false });
     assert.equal(context.dotnet.source, 'managed');
-    assert.equal(context.dotnet.info.sdks.some(item => item.version === DOTNET_SDK_VERSION), true);
+    assert.equal(context.dotnet.info.sdks.some(item => item.version === BROWSER_DOTNET_SDK_VERSION), true);
 
     const built = await publishBrowserFixture({
       net,
@@ -75,7 +75,7 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
     await fs.writeFile(path.join(outputRoot, 'latest.json'), `${JSON.stringify({
       framework: 'Avalonia',
       frameworkVersion: '12.1.1',
-      sdkVersion: DOTNET_SDK_VERSION,
+      sdkVersion: BROWSER_DOTNET_SDK_VERSION,
       outputDirectory: path.relative(root, output).replaceAll(path.sep, '/'),
       webRoot: path.relative(root, webRoot).replaceAll(path.sep, '/'),
       assets: relativeFiles.length,
