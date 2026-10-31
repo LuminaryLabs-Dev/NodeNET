@@ -81,7 +81,7 @@ export async function publishBrowserFixture({ net, repositoryRoot, workDirectory
     cwd: copied.fixture,
     timeout: 10 * 60_000
   }, onCommand);
-  const publish = await checkedExec(net, ['publish', project, '--configuration', 'Release', '--output', outputDirectory, '--no-restore', '--nologo'], {
+  const publish = await checkedExec(net, ['publish', project, '--configuration', 'Release', '--output', outputDirectory, '--no-restore', '--nologo', '-p:WasmBuildNative=true', '-p:WasmEnableSIMD=true', '-p:EmccLinkOptimizationFlag=-O1'], {
     cwd: copied.fixture,
     timeout: 30 * 60_000
   }, onCommand);
