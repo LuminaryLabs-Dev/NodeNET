@@ -61,6 +61,7 @@ jobs:
         env:
           NODENET_AVALONIA: '1'
           NODENET_AVALONIA_WASM_OUTPUT: artifacts/avalonia-wasm
+          NODENET_AVALONIA_LOCK_DIAGNOSTICS: '1'
         run: npm run test:avalonia:wasm
       - uses: actions/upload-artifact@v4
         if: always()
