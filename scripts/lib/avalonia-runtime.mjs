@@ -76,15 +76,15 @@ export async function publishBrowserFixture({ net, repositoryRoot, workDirectory
   const copied = await copyAvaloniaFixture(repositoryRoot, workDirectory);
   const project = path.join(copied.fixture, 'Calculator.Browser', 'Calculator.Browser.csproj');
   const workload = await checkedExec(net, ['workload', 'restore', project], {
-    cwd: copied.fixture,
+    cwd: path.dirname(project),
     timeout: 30 * 60_000
   }, onCommand);
   const restore = await checkedExec(net, ['restore', project, '--nologo', '--locked-mode'], {
-    cwd: copied.fixture,
+    cwd: path.dirname(project),
     timeout: 10 * 60_000
   }, onCommand);
   const publish = await checkedExec(net, ['publish', project, '--configuration', 'Release', '--output', outputDirectory, '--no-restore', '--nologo', '-p:WasmBuildNative=true', '-p:WasmEnableSIMD=true', '-p:EmccLinkOptimizationFlag=-O1'], {
-    cwd: copied.fixture,
+    cwd: path.dirname(project),
     timeout: 30 * 60_000
   }, onCommand);
   return { ...copied, project, outputDirectory, workload, restore, publish };
