@@ -63,7 +63,19 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
     assert.ok(relativeFiles.includes('main.js'), 'Published site is missing the browser bootstrap.');
     assert.ok(relativeFiles.includes('_framework/dotnet.js'), 'Published site is missing the .NET WebAssembly loader.');
     assert.ok(relativeFiles.some(file => file.startsWith('_framework/') && file.endsWith('.wasm')), 'Published site is missing WebAssembly runtime files.');
-    assert.ok(relativeFiles.some(file => file.endsWith('/Calculator.Browser.dll')), 'Published site is missing the Avalonia browser application assembly.');
+    // .NET 10 publishes managed WebCIL assemblies as fingerprinted .wasm assets, not .dll files.
+    const managedApp = relativeFiles.find(file => /^_framework\/Calculator\.Browser(?:\.[A-Za-z0-9_-]+)?\.wasm$/.test(file));
+    const managedShared = relativeFiles.find(file => /^_framework\/Calculator\.Shared(?:\.[A-Za-z0-9_-]+)?\.wasm$/.test(file));
+    const nativeRuntime = relativeFiles.find(file => /^_framework\/dotnet\.native(?:\.[A-Za-z0-9_-]+)?\.wasm$/.test(file));
+    const skia = relativeFiles.find(file => /^_framework\/SkiaSharp(?:\.[A-Za-z0-9_-]+)?\.wasm$/.test(file));
+    assert.ok(managedApp, 'Published site is missing the managed Avalonia browser assembly (WebCIL).');
+    assert.ok(managedShared, 'Published site is missing the shared C# application assembly (WebCIL).');
+    assert.ok(nativeRuntime, 'Published site is missing the native .NET WebAssembly runtime.');
+    assert.ok(skia, 'Published site is missing the SkiaSharp managed assembly (WebCIL).');
+    for (const asset of [managedApp, managedShared, nativeRuntime, skia]) {
+      const wasm = await fs.readFile(path.join(webRoot, asset));
+      assert.equal(wasm.subarray(0, 4).toString('hex'), '0061736d', `Invalid WebAssembly header: ${asset}`);
+    }
 
     const html = await fs.readFile(path.join(webRoot, 'index.html'), 'utf8');
     const bootstrap = await fs.readFile(path.join(webRoot, 'main.js'), 'utf8');
@@ -80,6 +92,10 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
       webRoot: path.relative(root, webRoot).replaceAll(path.sep, '/'),
       assets: relativeFiles.length,
       wasmAssets: relativeFiles.filter(file => file.endsWith('.wasm')).length,
+      managedApp,
+      managedShared,
+      nativeRuntime,
+      skia,
       pass: true
     }, null, 2)}\n`);
 
