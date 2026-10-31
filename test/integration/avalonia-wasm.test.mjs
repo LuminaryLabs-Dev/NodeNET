@@ -53,16 +53,20 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
       outputDirectory: output
     });
 
-    const files = await findFiles(output);
-    const relativeFiles = files.map(file => path.relative(output, file).replaceAll(path.sep, '/'));
+    // .NET browser publish places deployable assets under wwwroot.
+    const webRoot = path.join(output, 'wwwroot');
+    assert.equal((await fs.stat(webRoot).catch(() => null))?.isDirectory(), true,
+      'Published site is missing its wwwroot directory.');
+    const files = await findFiles(webRoot);
+    const relativeFiles = files.map(file => path.relative(webRoot, file).replaceAll(path.sep, '/'));
     assert.ok(relativeFiles.includes('index.html'), 'Published site is missing index.html.');
     assert.ok(relativeFiles.includes('main.js'), 'Published site is missing the browser bootstrap.');
     assert.ok(relativeFiles.includes('_framework/dotnet.js'), 'Published site is missing the .NET WebAssembly loader.');
     assert.ok(relativeFiles.some(file => file.startsWith('_framework/') && file.endsWith('.wasm')), 'Published site is missing WebAssembly runtime files.');
     assert.ok(relativeFiles.some(file => file.endsWith('/Calculator.Browser.dll')), 'Published site is missing the Avalonia browser application assembly.');
 
-    const html = await fs.readFile(path.join(output, 'index.html'), 'utf8');
-    const bootstrap = await fs.readFile(path.join(output, 'main.js'), 'utf8');
+    const html = await fs.readFile(path.join(webRoot, 'index.html'), 'utf8');
+    const bootstrap = await fs.readFile(path.join(webRoot, 'main.js'), 'utf8');
     assert.match(html, /id="out"/);
     assert.match(html, /src="\.\/main\.js"/);
     assert.match(bootstrap, /runMain/);
@@ -73,6 +77,7 @@ test('publishes the pinned Avalonia calculator as a loadable browser WebAssembly
       frameworkVersion: '12.1.1',
       sdkVersion: DOTNET_SDK_VERSION,
       outputDirectory: path.relative(root, output).replaceAll(path.sep, '/'),
+      webRoot: path.relative(root, webRoot).replaceAll(path.sep, '/'),
       assets: relativeFiles.length,
       wasmAssets: relativeFiles.filter(file => file.endsWith('.wasm')).length,
       pass: true
