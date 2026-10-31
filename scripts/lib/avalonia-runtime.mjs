@@ -75,6 +75,10 @@ export async function buildHeadlessFixture({ net, repositoryRoot, workDirectory,
 export async function publishBrowserFixture({ net, repositoryRoot, workDirectory, outputDirectory, onCommand }) {
   const copied = await copyAvaloniaFixture(repositoryRoot, workDirectory);
   const project = path.join(copied.fixture, 'Calculator.Browser', 'Calculator.Browser.csproj');
+  const workloadInstall = await checkedExec(net, ['workload', 'install', 'wasm-tools', '--skip-manifest-update'], {
+    cwd: path.dirname(project),
+    timeout: 30 * 60_000
+  }, onCommand);
   const workload = await checkedExec(net, ['workload', 'restore', project], {
     cwd: path.dirname(project),
     timeout: 30 * 60_000
@@ -104,7 +108,7 @@ export async function publishBrowserFixture({ net, repositoryRoot, workDirectory
     cwd: path.dirname(project),
     timeout: 30 * 60_000
   }, onCommand);
-  return { ...copied, project, outputDirectory, workload, restore, publish };
+  return { ...copied, project, outputDirectory, workloadInstall, workload, restore, publish };
 }
 
 function assertControlPoints(ready, width, height) {
