@@ -25,7 +25,7 @@ test('permanent Avalonia fixture pins SDK, packages, and lock graphs', async () 
     }
   }
   const lockPackages = new Map([
-    ['packages.lock.json', ['Avalonia', 'Avalonia.Desktop', 'Avalonia.Fonts.Inter', 'Avalonia.Headless', 'Avalonia.Skia', 'Avalonia.Themes.Fluent']],
+    ['packages.lock.json', ['Avalonia', 'Avalonia.Browser', 'Avalonia.Desktop', 'Avalonia.Fonts.Inter', 'Avalonia.Headless', 'Avalonia.Skia', 'Avalonia.Themes.Fluent']],
     ['Calculator.Shared/packages.lock.json', ['Avalonia']],
     ['Calculator.Headless/packages.lock.json', ['Avalonia', 'Avalonia.Fonts.Inter', 'Avalonia.Headless', 'Avalonia.Skia', 'Avalonia.Themes.Fluent']],
     ['Calculator.App/packages.lock.json', ['Avalonia', 'Avalonia.Desktop', 'Avalonia.Fonts.Inter', 'Avalonia.Themes.Fluent']]
