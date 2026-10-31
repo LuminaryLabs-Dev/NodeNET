@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NodeNET } from '../../src/index.js';
 import {
-  BROWSER_BROWSER_DOTNET_SDK_VERSION,
+  BROWSER_DOTNET_SDK_VERSION,
   publishBrowserFixture,
   shutdownBuildServers
 } from '../../scripts/lib/avalonia-runtime.mjs';
