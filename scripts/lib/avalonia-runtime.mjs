@@ -81,7 +81,7 @@ export async function publishBrowserFixture({ net, repositoryRoot, workDirectory
   }, onCommand);
   let restore;
   try {
-    const restore = await checkedExec(net, ['restore', project, '--nologo', '--locked-mode'], {
+    restore = await checkedExec(net, ['restore', project, '--nologo', '--locked-mode'], {
       cwd: path.dirname(project),
       timeout: 10 * 60_000
     }, onCommand);
