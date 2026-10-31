@@ -6,6 +6,8 @@ import { DisplayValidationHarness, NodeNET } from '../../src/index.js';
 
 export const AVALONIA_VERSION = '12.1.1';
 export const DOTNET_SDK_VERSION = '10.0.400';
+// Browser lockfile pins runtime package versions bundled with SDK 10.0.401 (.NET 10.0.12).
+export const BROWSER_DOTNET_SDK_VERSION = '10.0.401';
 
 function processEvidence(result) {
   return `exit=${result.exitCode}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`;
