@@ -4,20 +4,32 @@
 
 NodeNET is an ESM-native Node.js facade over the official .NET toolchain and runtime. It can inspect .NET targets, resolve or privately provision a compatible SDK/runtime, restore/build/test/publish/run projects, pass arbitrary `dotnet` commands through a `nodenet` CLI, and interoperate with compiled .NET libraries without requiring a machine-wide .NET setup.
 
-> Developer Preview — `0.3.2`
+> **0.3.2 Developer Preview — validated engineering baseline, not a published release.**
 
-## Install
+## Current state (2026-10-31)
+
+| Field | Confirmed state |
+| --- | --- |
+| Maintainer | Luminary Labs |
+| Engineering baseline | [`5903d21f`](https://github.com/LuminaryLabs-Dev/NodeNET/commit/5903d21f309882167240ab83b3345a37a99f8912) on `main` |
+| Package source | `@luminarylabs/nodenet@0.3.2` |
+| CI | 14/14 hosted jobs PASS across Windows, Linux and macOS |
+| Browser | Native Avalonia WASM publish PASS; interactive Chromium NodeNET bridge not yet automated |
+| Release | No v0.3.2 GitHub tag or GitHub release at baseline; npm publication unverified |
+
+NodeNET is **JavaScript access to the official Microsoft .NET toolchain**, not its own C# compiler, self-contained offline SDK, or security sandbox. Its next phase is a portable SDK distribution and browser interaction acceptance (internal successor **LUM-000156**).
+
+## Install from the repository
+
+Until an approved npm release is verified, install from GitHub with appropriate repository access:
 
 ```bash
-npm install @luminarylabs/nodenet
+npm install github:LuminaryLabs-Dev/NodeNET#main
+npx --no-install nodenet --version
+npx --no-install nodenet --help
 ```
 
-Or run the CLI without a global install:
-
-```bash
-npx nodenet --help
-npx nodenet --version
-```
+For reproducibility, pin a reviewed commit rather than `main`. Declaring `@luminarylabs/nodenet` in `package.json` does not mean the package is published to npm. An approved future registry release will use `npm install @luminarylabs/nodenet`.
 
 ## `dotnet`, from Node
 
@@ -40,12 +52,12 @@ nodenet nuget list source
 
 Unknown options on NodeNET-owned build/test/publish/restore/clean/run commands are preserved and forwarded to `dotnet`, so NodeNET does not need to reimplement every Microsoft CLI flag.
 
-Starting from Node with no compatible global .NET SDK:
+Starting from Node with no system-wide .NET SDK (requires network access or verified cached SDK/NuGet assets):
 
 ```bash
-npx nodenet new console -o Hello
+npx --no-install nodenet new console -o Hello
 cd Hello
-npx nodenet run
+npx --no-install nodenet run
 ```
 
 NodeNET can provision an official SDK privately and scopes `DOTNET_ROOT`, CLI home, NuGet cache, and PATH changes to child processes. Human CLI sessions show provisioning progress; `--json` keeps final output machine-readable.
@@ -120,20 +132,15 @@ nodenet cache clear downloads
 
 See [`docs/CLI.md`](docs/CLI.md).
 
-## Portable environments
+## Portable .NET environments
 
-- **shared** — reusable managed environments under `~/.nodenet` or `NODENET_HOME`
-- **local** — managed state under the attached project's `.nodenet`
-- **temporary** — isolated OS-temp environment removed by `dispose()`
+- **shared** — reusable private .NET under `~/.nodenet` or `NODENET_HOME`
+- **local** — project-local `.nodenet` state
+- **temporary** — disposable environment removed by `dispose()`
 
-Resolution order in `auto` mode:
+`auto` resolution uses explicit `dotnetPath`, an existing managed SDK, a compatible system SDK, then verified official Microsoft provisioning. `isolation: 'managed'` forbids system .NET; `isolation: 'system'` forbids managed provisioning.
 
-1. explicit `dotnetPath`
-2. compatible NodeNET-managed environment
-3. compatible system `dotnet`
-4. official private SDK/runtime provisioning
-
-Use `isolation: 'managed'` to forbid system .NET or `isolation: 'system'` to forbid private provisioning.
+**Limit:** A NodeNET npm package does not contain the official compiler, CLR, NuGet cache, reference packs, or `wasm-tools`. Private provisioning works when the host can download official archives or has a verified cached archive. An empty network-disabled AI sandbox cannot compile fresh C# until real toolchain bytes have been supplied. See [portability](docs/PORTABILITY.md).
 
 ## Service/plugin architecture
 
@@ -253,20 +260,13 @@ npm run validate:examples
 
 See [`examples/README.md`](examples/README.md). Generated screenshots and verification reports are written under `artifacts/examples/` and remain outside the published npm package.
 
-## Avalonia
+## Avalonia and browser WebAssembly
 
-Avalonia remains a framework on top of NodeNET rather than a dependency embedded into core.
+The permanent calculator fixture shares C# controls across headless, desktop and browser hosts. The **NodeNET DisplayService input-to-C#-state-to-RGBA frame** proof runs headlessly on Windows, Linux and macOS, including `12 + 7 = 19`.
 
-```bash
-nodenet new install Avalonia.Templates
-nodenet new avalonia.app -o DesktopApp
-cd DesktopApp
-nodenet restore
-nodenet build
-nodenet run
-```
+The committed `Calculator.Browser` project is a genuine `net10.0-browser` Avalonia site. Its `Program.cs` starts `StartBrowserAppAsync("out")`; `wwwroot/main.js` launches Microsoft's .NET WebAssembly loader. Linux CI installs managed SDK `10.0.401` and `wasm-tools`, performs locked restore, publishes with `WasmBuildNative=true`, `WasmEnableSIMD=true` and `EmccLinkOptimizationFlag=-O1`, then checks `wwwroot` plus fingerprinted native/WebCIL assets.
 
-The repository contains a permanent, version-locked calculator fixture shared by a headless entrypoint and a normal desktop entrypoint. Framework acceptance builds that real C# project, sends Node pointer input into its Avalonia controls, verifies `12 + 7 = 19`, and captures the initial, expression, and result frames through DisplayService.
+**Validation boundary:** browser CI checks a loadable static site's assets, not automated mouse, keyboard, focus, text, or C# state/frame changes through a NodeNET browser bridge. The browser interaction and headless NodeNET integration are separate claims. See [DisplayService](docs/DISPLAY.md).
 
 ## Supported host identities
 
@@ -285,43 +285,52 @@ Implemented does not mean every RID is continuously tested. Standard CI currentl
 
 A private .NET archive does not provide every OS-native dependency required by every framework. NodeNET deliberately does not run `apt`, `brew`, `dnf`, `choco`, or similar package managers automatically.
 
-## Validation
+## Validation and evidence
 
 ```bash
+npm ci --ignore-scripts
 npm test
 npm run check
 npm run test:display
 npm pack --dry-run
 ```
 
-Network-backed portable integration:
+Managed integration and framework validation (require .NET provisioning and network/cached packages):
 
 ```bash
 NODENET_INTEGRATION=1 npm run test:integration
-```
-
-Avalonia acceptance:
-
-```bash
 NODENET_AVALONIA=1 npm run test:avalonia
+NODENET_AVALONIA=1 npm run test:avalonia:wasm
 ```
 
-Complete local production validation and the additional macOS window confirmation:
+Local release-candidate gates:
 
 ```bash
 npm run validate:local
 npm run validate:local:visible
 ```
 
-Each local run writes a self-contained report under `artifacts/local-validation/`. The visible command requires clicking `1`, `2`, `+`, `7`, `=`, confirming `19`, and closing the real Avalonia window.
+The second command additionally requires a compatible visible macOS Avalonia session; it has **not** been independently verified for the recorded baseline. Reports are created under `artifacts/local-validation/`.
 
-## Canonical project state
+### Verified CI at `5903d21f`
 
-For closeout and future handoff, use these repository documents rather than chat history:
+- [General CI](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/41239507334): 7/7 PASS, including software display and Node 20/22 checks on three OS.
+- [Avalonia Framework Acceptance](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/41239507349): 4/4 PASS, including headless acceptance on three OS and Linux browser WASM publishing.
+- [Portable .NET Integration](https://github.com/LuminaryLabs-Dev/NodeNET/actions/runs/41239507368): 3/3 PASS, including managed provisioning, C# interop and packed consumers.
 
-- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — current product, architecture, capabilities, and limitations
-- [`docs/VALIDATION.md`](docs/VALIDATION.md) — exact acceptance and release gates
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — deliberately staged future work
+**14/14 hosted jobs passed on the cited source commit.** This is not evidence of npm publication, the full local release report, an offline SDK capsule or live Chromium NodeNET interaction. Each later change requires fresh validation.
+
+## Authoritative documentation and next decision
+
+- [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) — verified architecture and limitations
+- [`docs/VALIDATION.md`](docs/VALIDATION.md) — release gates, commands and evidence
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — staged product milestones
+- [`docs/PORTABILITY.md`](docs/PORTABILITY.md) — host and SDK boundaries
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — service ownership
+
+**Next:** deliver a reproducible, JavaScript-accessible C# SDK with verified offline toolchain delivery and actual browser NodeNET input/frame automation (LUM-000156). LUM-000152 and LUM-000153 remain separate documentation and ChatGPT application-acceptance tasks. Local prototype SDK/capsule code is **not committed to main**.
+
+No v0.3.2 tag, npm publication, or deployment should occur without explicit release approval and the remaining acceptance evidence.
 
 ## Ownership boundary
 
